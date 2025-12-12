@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from datetime import datetime
 from app.services import MovimentoService, ProdutoService, CaixaService
 
 movimentos_bp = Blueprint('movimentos', __name__, url_prefix='/movimentos')
 
 @movimentos_bp.route('/')
+@login_required
 def listar():
     data_inicio_str = request.args.get('data_inicio')
     data_fim_str = request.args.get('data_fim')
@@ -25,6 +27,7 @@ def listar():
     return render_template('movimentos/lista.html', movimentos=movimentos, produtos=produtos)
 
 @movimentos_bp.route('/entrada', methods=['GET', 'POST'])
+@login_required
 def entrada():
     if request.method == 'POST':
         try:
@@ -46,6 +49,7 @@ def entrada():
     return render_template('movimentos/entrada.html', produtos=produtos)
 
 @movimentos_bp.route('/saida', methods=['GET', 'POST'])
+@login_required
 def saida():
     if request.method == 'POST':
         try:

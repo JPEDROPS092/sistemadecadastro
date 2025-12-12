@@ -21,6 +21,8 @@
                 <li><a href="{{ url_for('movimentos.listar') }}" class="{{ 'active' if 'movimentos' in request.endpoint }}">Movimentos</a></li>
                 <li><a href="{{ url_for('caixa.index') }}" class="{{ 'active' if 'caixa' in request.endpoint }}">Caixa</a></li>
                 <li><a href="{{ url_for('relatorios.index') }}" class="{{ 'active' if 'relatorios' in request.endpoint }}">Relatórios</a></li>
+                <li><a href="{{ url_for('auth.perfil') }}" class="{{ 'active' if 'auth.perfil' in request.endpoint }}">👤 {{ current_user.username }}</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Sair</a></li>
             </ul>
         </div>
     </nav>

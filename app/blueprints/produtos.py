@@ -1,14 +1,17 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask_login import login_required
 from app.services import ProdutoService, MovimentoService
 
 produtos_bp = Blueprint('produtos', __name__, url_prefix='/produtos')
 
 @produtos_bp.route('/')
+@login_required
 def listar():
     produtos = ProdutoService.listar_produtos()
     return render_template('produtos/lista.html', produtos=produtos)
 
 @produtos_bp.route('/novo', methods=['GET', 'POST'])
+@login_required
 def novo():
     if request.method == 'POST':
         try:
@@ -31,6 +34,7 @@ def novo():
     return render_template('produtos/form.html', produto=None)
 
 @produtos_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
 def editar(id):
     produto = ProdutoService.obter_produto(id)
     if not produto:
@@ -54,6 +58,7 @@ def editar(id):
     return render_template('produtos/form.html', produto=produto)
 
 @produtos_bp.route('/<int:id>/excluir', methods=['POST'])
+@login_required
 def excluir(id):
     try:
         ProdutoService.excluir_produto(id)
@@ -64,6 +69,7 @@ def excluir(id):
     return redirect(url_for('produtos.listar'))
 
 @produtos_bp.route('/estoque-baixo')
+@login_required
 def estoque_baixo():
     produtos = ProdutoService.produtos_estoque_baixo()
     return render_template('produtos/estoque_baixo.html', produtos=produtos)

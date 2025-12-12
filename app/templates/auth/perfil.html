@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Meu Perfil - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Meu Perfil</h1>
+        <a href="{{ url_for('auth.alterar_senha') }}" class="btn btn-primary">Alterar Senha</a>
+    </div>
+
+    <div class="grid grid-2">
+        <div>
+            <p><strong>Nome de Usuário:</strong> {{ current_user.username }}</p>
+            <p><strong>Nome Completo:</strong> {{ current_user.nome_completo }}</p>
+            <p><strong>Email:</strong> {{ current_user.email }}</p>
+        </div>
+        <div>
+            <p><strong>Tipo de Usuário:</strong>
+                {% if current_user.is_admin %}
+                    <span class="badge badge-danger">Administrador</span>
+                {% elif current_user.is_gerente %}
+                    <span class="badge badge-warning">Gerente</span>
+                {% else %}
+                    <span class="badge badge-info">Operador</span>
+                {% endif %}
+            </p>
+            <p><strong>Data de Criação:</strong> {{ current_user.data_criacao.strftime('%d/%m/%Y %H:%M') if current_user.data_criacao }}</p>
+            <p><strong>Último Acesso:</strong> {{ current_user.ultimo_acesso.strftime('%d/%m/%Y %H:%M') if current_user.ultimo_acesso else 'Primeiro acesso' }}</p>
+        </div>
+    </div>
+
+    {% if current_user.is_admin %}
+    <div class="mt-3">
+        <a href="{{ url_for('auth.listar_usuarios') }}" class="btn btn-secondary">Gerenciar Usuários</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required
 from app.services import CaixaService
 
 caixa_bp = Blueprint('caixa', __name__, url_prefix='/caixa')
 
 @caixa_bp.route('/')
+@login_required
 def index():
     caixa = CaixaService.obter_caixa_aberto()
     movimentos = []
@@ -14,6 +16,7 @@ def index():
     return render_template('caixa/index.html', caixa=caixa, movimentos=movimentos)
 
 @caixa_bp.route('/abrir', methods=['POST'])
+@login_required
 def abrir():
     try:
         saldo_inicial = float(request.form.get('saldo_inicial', 0))
@@ -27,6 +30,7 @@ def abrir():
     return redirect(url_for('caixa.index'))
 
 @caixa_bp.route('/fechar', methods=['POST'])
+@login_required
 def fechar():
     try:
         caixa = CaixaService.obter_caixa_aberto()
@@ -43,6 +47,7 @@ def fechar():
     return redirect(url_for('caixa.historico'))
 
 @caixa_bp.route('/movimento', methods=['POST'])
+@login_required
 def movimento():
     try:
         caixa = CaixaService.obter_caixa_aberto()
@@ -64,11 +69,13 @@ def movimento():
     return redirect(url_for('caixa.index'))
 
 @caixa_bp.route('/historico')
+@login_required
 def historico():
     caixas = CaixaService.listar_caixas()
     return render_template('caixa/historico.html', caixas=caixas)
 
 @caixa_bp.route('/<int:id>')
+@login_required
 def detalhes(id):
     caixa = CaixaService.obter_caixa(id)
     if not caixa:

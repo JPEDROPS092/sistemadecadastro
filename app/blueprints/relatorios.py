@@ -1,19 +1,23 @@
 from flask import Blueprint, render_template, request
+from flask_login import login_required
 from datetime import datetime
 from app.services import RelatorioService
 
 relatorios_bp = Blueprint('relatorios', __name__, url_prefix='/relatorios')
 
 @relatorios_bp.route('/')
+@login_required
 def index():
     return render_template('relatorios/index.html')
 
 @relatorios_bp.route('/estoque')
+@login_required
 def estoque():
     relatorio = RelatorioService.relatorio_estoque()
     return render_template('relatorios/estoque.html', relatorio=relatorio)
 
 @relatorios_bp.route('/movimentos')
+@login_required
 def movimentos():
     periodo = request.args.get('periodo', 'dia')
 
@@ -35,11 +39,13 @@ def movimentos():
     return render_template('relatorios/movimentos.html', relatorio=relatorio, periodo=periodo)
 
 @relatorios_bp.route('/fluxo-diario')
+@login_required
 def fluxo_diario():
     relatorio = RelatorioService.relatorio_fluxo_diario()
     return render_template('relatorios/fluxo_diario.html', relatorio=relatorio)
 
 @relatorios_bp.route('/caixa')
+@login_required
 def caixa():
     caixa_id = request.args.get('caixa_id')
     if caixa_id:
