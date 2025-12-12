@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Transações</h3>
+  <a class="btn btn-outline-primary" href="{{ url_for('export_csv') }}">Exportar CSV</a>
+</div>
+
+<table class="table table-sm">
+  <thead>
+    <tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Qtd</th><th>Preço Unit.</th><th>Motivo</th></tr>
+  </thead>
+  <tbody>
+    {% for t in transacoes %}
+    <tr>
+      <td>{{ t.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+      <td>{{ t.produto.nome }}</td>
+      <td>{{ t.tipo }}</td>
+      <td>{{ t.quantidade }}</td>
+      <td>R$ {{ '%.2f'|format(t.preco_unitario) }}</td>
+      <td>{{ t.motivo or '-' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6">Nenhuma transação registrada.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

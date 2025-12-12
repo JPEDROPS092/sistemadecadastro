@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Produtos</h3>
+  <a href="{{ url_for('produto_form') }}" class="btn btn-primary">Novo Produto</a>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr><th>Nome</th><th>SKU</th><th>Preço</th><th>Qtd</th><th>Categoria</th><th>Mínimo Alerta</th><th>Ações</th></tr>
+  </thead>
+  <tbody>
+    {% for p in produtos %}
+    <tr>
+      <td>{{ p.nome }}</td>
+      <td>{{ p.sku or '-' }}</td>
+      <td>R$ {{ '%.2f'|format(p.preco) }}</td>
+      <td>{{ p.quantidade }}</td>
+      <td>{{ p.categoria or '-' }}</td>
+      <td>{{ p.minimo_alerta }}</td>
+      <td>
+        <a class="btn btn-sm btn-secondary" href="{{ url_for('produto_form', produto_id=p.id) }}">Editar</a>
+        <form method="post" action="{{ url_for('produto_deletar', produto_id=p.id) }}" style="display:inline-block" onsubmit="return confirm('Deletar produto?');">
+          <button class="btn btn-sm btn-danger">Deletar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório de Estoque</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
+h2, h3 { color: #333; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+th { background-color: #17a2b8; color: white; }
+tr:nth-child(even) { background-color: #f2f2f2; }
+.negativo { color: red; font-weight: bold; }
+button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<h2>Relatório de Estoque</h2>
+
+<h3>Resumo Diário</h3>
+<canvas id="graficoDiario" width="400" height="150"></canvas>
+<table>
+<tr>
+  <th>Produto</th>
+  <th>Total Gasto</th>
+  <th>Total Ganho</th>
+  <th>Lucro Líquido</th>
+</tr>
+{% for r in relatorio_diario %}
+<tr>
+  <td>{{ r.nome }}</td>
+  <td>R$ {{ "%.2f"|format(r.total_gasto) }}</td>
+  <td>R$ {{ "%.2f"|format(r.total_ganho) }}</td>
+  <td class="{{ 'negativo' if (r.total_ganho - r.total_gasto)<0 else '' }}">
+      R$ {{ "%.2f"|format(r.total_ganho - r.total_gasto) }}
+  </td>
+</tr>
+{% endfor %}
+</table>
+
+<h3>Resumo Semanal</h3>
+<canvas id="graficoSemanal" width="400" height="150"></canvas>
+<table>
+<tr>
+  <th>Produto</th>
+  <th>Total Gasto</th>
+  <th>Total Ganho</th>
+  <th>Lucro Líquido</th>
+</tr>
+{% for r in relatorio_semanal %}
+<tr>
+  <td>{{ r.nome }}</td>
+  <td>R$ {{ "%.2f"|format(r.total_gasto) }}</td>
+  <td>R$ {{ "%.2f"|format(r.total_ganho) }}</td>
+  <td class="{{ 'negativo' if (r.total_ganho - r.total_gasto)<0 else '' }}">
+      R$ {{ "%.2f"|format(r.total_ganho - r.total_gasto) }}
+  </td>
+</tr>
+{% endfor %}
+</table>
+
+<a href="/" style="text-decoration:none;">
+  <button>Voltar ao Estoque</button>
+</a>
+
+<script>
+// Dados para gráfico diário
+const nomesDiario = {{ relatorio_diario|map(attribute='nome')|list|tojson }};
+const lucrosDiario = {{ relatorio_diario|map(attribute='total_ganho')|list|tojson }};
+const gastosDiario = {{ relatorio_diario|map(attribute='total_gasto')|list|tojson }};
+const lucroLiquidoDiario = lucrosDiario.map((g, i) => g - gastosDiario[i]);
+
+const ctxDiario = document.getElementById('graficoDiario').getContext('2d');
+new Chart(ctxDiario, {
+    type: 'bar',
+    data: {
+        labels: nomesDiario,
+        datasets: [{
+            label: 'Lucro Líquido Diário',
+            data: lucroLiquidoDiario,
+            backgroundColor: lucroLiquidoDiario.map(v => v < 0 ? 'red' : 'green')
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+});
+
+// Dados para gráfico semanal
+const nomesSemanal = {{ relatorio_semanal|map(attribute='nome')|list|tojson }};
+const lucrosSemanal = {{ relatorio_semanal|map(attribute='total_ganho')|list|tojson }};
+const gastosSemanal = {{ relatorio_semanal|map(attribute='total_gasto')|list|tojson }};
+const lucroLiquidoSemanal = lucrosSemanal.map((g, i) => g - gastosSemanal[i]);
+
+const ctxSemanal = document.getElementById('graficoSemanal').getContext('2d');
+new Chart(ctxSemanal, {
+    type: 'bar',
+    data: {
+        labels: nomesSemanal,
+        datasets: [{
+            label: 'Lucro Líquido Semanal',
+            data: lucroLiquidoSemanal,
+            backgroundColor: lucroLiquidoSemanal.map(v => v < 0 ? 'red' : 'green')
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Gestão de Estoque</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
+h2 { color: #333; }
+form input, form button { padding: 5px; margin: 5px 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+th { background-color: #007bff; color: white; }
+tr:nth-child(even) { background-color: #f2f2f2; }
+button { padding: 5px 10px; cursor: pointer; }
+.entrada { background-color: #28a745; color: white; border: none; }
+.saida { background-color: #dc3545; color: white; border: none; }
+.limpar { background-color: #6c757d; color: white; padding: 10px 20px; border: none; margin-top: 20px; cursor: pointer; }
+.negativo { color: red; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h2>Cadastro de Produto</h2>
+<form action="/cadastrar" method="post">
+  <input type="text" name="nome" placeholder="Nome do Produto" required>
+  <input type="number" name="valor_compra" step="0.01" placeholder="Valor Compra (R$)" required>
+  <input type="number" name="valor_venda" step="0.01" placeholder="Valor Venda (R$)" required>
+  <input type="number" name="quantidade" placeholder="Quantidade" required>
+  <button type="submit">Cadastrar</button>
+</form>
+
+<h2>Estoque Atual</h2>
+<table>
+<tr>
+  <th>Produto</th>
+  <th>Qtd</th>
+  <th>Valor Compra</th>
+  <th>Valor Venda</th>
+  <th>Ações</th>
+</tr>
+{% for p in produtos %}
+<tr>
+  <td>{{ p.nome }}</td>
+  <td>{{ p.qtd }}</td>
+  <td>R$ {{ "%.2f"|format(p.valor_compra) }}</td>
+  <td>R$ {{ "%.2f"|format(p.valor_venda) }}</td>
+  <td>
+    <form style="display:inline;" action="/entrada/{{ p.id }}" method="post">
+      <input type="number" name="quantidade" placeholder="Qtd" min="1" required>
+      <button class="entrada" type="submit">Entrada</button>
+    </form>
+    <form style="display:inline;" action="/saida/{{ p.id }}" method="post">
+      <input type="number" name="quantidade" placeholder="Qtd" min="1" required>
+      <button class="saida" type="submit">Saída</button>
+    </form>
+  </td>
+</tr>
+{% endfor %}
+</table>
+
+<br>
+<a href="/relatorio" style="text-decoration:none;">
+  <button class="limpar">Ver Relatório</button>
+</a>
+
+<br><br>
+<form action="/limpar" method="get">
+  <button class="limpar" type="submit">Limpar Estoque</button>
+</form>
+
+</body>
+</html>

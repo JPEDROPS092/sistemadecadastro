@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h3>Dashboard</h3>
+    <p>Total itens: <strong>{{ total_itens }}</strong> — Valor total em estoque: <strong>R$ {{ '%.2f'|format(total_ativos) }}</strong></p>
+
+    <h5>Produtos</h5>
+    <table class="table table-sm">
+      <thead>
+        <tr><th>Nome</th><th>Qtd</th><th>Preço</th><th>Categoria</th><th>Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for p in produtos %}
+        <tr class="{% if p.quantidade <= p.minimo_alerta %}table-warning{% endif %}">
+          <td>{{ p.nome }}</td>
+          <td>{{ p.quantidade }}</td>
+          <td>R$ {{ '%.2f'|format(p.preco) }}</td>
+          <td>{{ p.categoria or '-' }}</td>
+          <td>
+            <a class="btn btn-sm btn-primary" href="{{ url_for('produto_form', produto_id=p.id) }}">Editar</a>
+            <form method="post" action="{{ url_for('produto_deletar', produto_id=p.id) }}" style="display:inline-block" onsubmit="return confirm('Deletar produto?');">
+              <button class="btn btn-sm btn-danger">Deletar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col-md-4">
+    <h5>Registro Rápido</h5>
+    <form action="{{ url_for('transacao_nova') }}" method="post">
+      <div class="mb-2">
+        <label>Produto</label>
+        <select name="produto_id" class="form-select" required>
+          {% for p in produtos %}
+            <option value="{{ p.id }}">{{ p.nome }} ({{ p.quantidade }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-2">
+        <label>Tipo</label>
+        <select name="tipo" class="form-select" required>
+          <option value="entrada">Entrada</option>
+          <option value="saida">Saída</option>
+        </select>
+      </div>
+      <div class="mb-2">
+        <label>Quantidade</label>
+        <input name="quantidade" type="number" min="1" class="form-control" value="1" required>
+      </div>
+      <div class="mb-2">
+        <label>Preço unitário</label>
+        <input name="preco_unitario" type="number" step="0.01" class="form-control" value="0.00">
+      </div>
+      <div class="mb-2">
+        <label>Motivo (opcional)</label>
+        <input name="motivo" class="form-control">
+      </div>
+      <button class="btn btn-success">Registrar</button>
+    </form>
+
+    <hr>
+    <h6>Estoque baixo</h6>
+    <ul>
+      {% for p in baixo_estoque %}
+        <li>{{ p.nome }} — {{ p.quantidade }} (mín {{ p.minimo_alerta }})</li>
+      {% else %}
+        <li>Sem produtos em alerta.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

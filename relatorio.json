@@ -1,0 +1,17 @@
+[
+    {
+        "nome": "ouro branco",
+        "valor": 500.0,
+        "tipo": "entrada"
+    },
+    {
+        "nome": "Refrigerante",
+        "valor": 100.0,
+        "tipo": "entrada"
+    },
+    {
+        "nome": "ouro branco",
+        "valor": 200.0,
+        "tipo": "saida"
+    }
+]

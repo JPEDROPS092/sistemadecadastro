@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lista de Produtos</title>
+</head>
+<body>
+    <h1>Produtos Registrados</h1>
+
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Nome</th>
+            <th>Valor</th>
+            <th>Tipo</th>
+        </tr>
+
+        {% for item in dados %}
+        <tr>
+            <td>{{ item.nome }}</td>
+            <td>R$ {{ item.valor }}</td>
+            <td>{{ item.tipo }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br><a href="/">Voltar</a>
+    <br><a href="/relatorio">Ver relatório</a>
+</body>
+</html>

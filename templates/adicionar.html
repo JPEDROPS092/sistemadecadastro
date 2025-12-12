@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Adicionar Produto</title>
+  <style>
+    body { font-family: Arial; background:#f6f7fb; padding:30px; }
+    .card { background:#fff; padding:20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.06); max-width:700px; margin:auto; }
+    input, select { padding:10px; width:100%; margin-top:8px; margin-bottom:14px; border-radius:6px; border:1px solid #ddd; }
+    label { font-weight:600; }
+    button { padding:10px 16px; border-radius:8px; border:none; background:#4A90E2; color:white; cursor:pointer; }
+    .flash { margin-bottom:12px; padding:10px; border-radius:8px; }
+    .success { background:#e6ffed; border:1px solid #a6f0b9; }
+    .danger { background:#ffebeb; border:1px solid #f1a1a1; }
+    a.back { display:inline-block; margin-top:8px; color:#4A90E2; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>➕ Adicionar Produto</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash {{ 'success' if cat=='success' else 'danger' }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      <label>Nome do produto</label>
+      <input type="text" name="nome" placeholder="Ex: Arroz Tipo 1" required>
+
+      <label>Quantidade (aceita kg/g). Exemplos: <small>2, 2kg, 300g, 0.5kg</small></label>
+      <input type="text" name="quantidade" placeholder="Ex: 2kg ou 300g" required>
+
+      <label>Valor unitário (aceita K/M). Exemplos: <small>50K, 1.2M, 50000, 50.000,00</small></label>
+      <input type="text" name="valor" placeholder="Ex: 50K ou 1200" required>
+
+      <button type="submit">Salvar</button>
+    </form>
+
+    <a class="back" href="/">⬅ Voltar</a>
+  </div>
+</body>
+</html>
