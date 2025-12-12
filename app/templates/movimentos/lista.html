@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Movimentos - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Movimentos de Estoque</h1>
+        <div>
+            <a href="{{ url_for('movimentos.entrada') }}" class="btn btn-success">Nova Entrada</a>
+            <a href="{{ url_for('movimentos.saida') }}" class="btn btn-danger">Nova Saída</a>
+        </div>
+    </div>
+
+    <form method="GET" class="mb-3">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="produto_id" class="form-label">Produto</label>
+                <select id="produto_id" name="produto_id" class="form-control">
+                    <option value="">Todos</option>
+                    {% for p in produtos %}
+                        <option value="{{ p.id }}" {{ 'selected' if request.args.get('produto_id') == p.id|string }}>{{ p.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="tipo" class="form-label">Tipo</label>
+                <select id="tipo" name="tipo" class="form-control">
+                    <option value="">Todos</option>
+                    <option value="entrada" {{ 'selected' if request.args.get('tipo') == 'entrada' }}>Entrada</option>
+                    <option value="saida" {{ 'selected' if request.args.get('tipo') == 'saida' }}>Saída</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="data_inicio" class="form-label">Data Início</label>
+                <input type="date" id="data_inicio" name="data_inicio" class="form-control" value="{{ request.args.get('data_inicio', '') }}">
+            </div>
+
+            <div class="form-group">
+                <label for="data_fim" class="form-label">Data Fim</label>
+                <input type="date" id="data_fim" name="data_fim" class="form-control" value="{{ request.args.get('data_fim', '') }}">
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <a href="{{ url_for('movimentos.listar') }}" class="btn btn-secondary">Limpar Filtros</a>
+    </form>
+
+    {% if movimentos %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Produto</th>
+                        <th>Tipo</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unitário</th>
+                        <th>Valor Total</th>
+                        <th>Observação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in movimentos %}
+                    <tr>
+                        <td>{{ m.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td><strong>{{ m.produto.nome }}</strong></td>
+                        <td>
+                            {% if m.tipo == 'entrada' %}
+                                <span class="badge badge-success">Entrada</span>
+                            {% else %}
+                                <span class="badge badge-danger">Saída</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ m.quantidade }}</td>
+                        <td>R$ {{ "%.2f"|format(m.valor_unitario) }}</td>
+                        <td><strong>R$ {{ "%.2f"|format(m.valor_total) }}</strong></td>
+                        <td>{{ m.observacao or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center text-muted">Nenhum movimento encontrado.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatórios - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<h1 class="card-title mb-3">Relatórios</h1>
+
+<div class="grid grid-3">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">📦 Relatório de Estoque</h2>
+        </div>
+        <p>Visualize informações completas sobre o estoque atual, valor total investido e produtos com estoque baixo.</p>
+        <a href="{{ url_for('relatorios.estoque') }}" class="btn btn-primary">Ver Relatório</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">📊 Relatório de Movimentos</h2>
+        </div>
+        <p>Analise entradas e saídas de produtos por período, visualize lucros e gráficos de movimentação.</p>
+        <a href="{{ url_for('relatorios.movimentos') }}" class="btn btn-primary">Ver Relatório</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">💰 Relatório de Caixa</h2>
+        </div>
+        <p>Acompanhe o fluxo de caixa, entradas e saídas financeiras do caixa atual.</p>
+        <a href="{{ url_for('relatorios.caixa') }}" class="btn btn-primary">Ver Relatório</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">📈 Fluxo Diário Completo</h2>
+        </div>
+        <p>Visualize o fluxo completo do dia com vendas, compras, entradas e saídas de caixa.</p>
+        <a href="{{ url_for('relatorios.fluxo_diario') }}" class="btn btn-primary">Ver Relatório</a>
+    </div>
+</div>
+{% endblock %}

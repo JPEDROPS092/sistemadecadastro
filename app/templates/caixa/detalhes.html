@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhes do Caixa - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Detalhes do Caixa #{{ caixa.id }}</h1>
+        <a href="{{ url_for('caixa.historico') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+
+    <div class="dashboard-cards">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Status</div>
+                    <div class="stat-card-value">
+                        {% if caixa.status == 'aberto' %}
+                            <span class="badge badge-success">Aberto</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Fechado</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="stat-card-icon primary">📊</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Saldo Inicial</div>
+                    <div class="stat-card-value">R$ {{ "%.2f"|format(caixa.saldo_inicial) }}</div>
+                </div>
+                <div class="stat-card-icon primary">💵</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Total Entradas</div>
+                    <div class="stat-card-value text-success">R$ {{ "%.2f"|format(caixa.total_entradas) }}</div>
+                </div>
+                <div class="stat-card-icon success">➕</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Total Saídas</div>
+                    <div class="stat-card-value text-danger">R$ {{ "%.2f"|format(caixa.total_saidas) }}</div>
+                </div>
+                <div class="stat-card-icon danger">➖</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Informações</h2>
+        </div>
+        <div>
+            <p><strong>Abertura:</strong> {{ caixa.data_abertura.strftime('%d/%m/%Y às %H:%M:%S') }}</p>
+            {% if caixa.data_fechamento %}
+                <p><strong>Fechamento:</strong> {{ caixa.data_fechamento.strftime('%d/%m/%Y às %H:%M:%S') }}</p>
+            {% endif %}
+            <p><strong>Saldo Final:</strong> R$ {{ "%.2f"|format(caixa.saldo_final if caixa.status == 'fechado' else caixa.saldo_calculado) }}</p>
+            {% if caixa.observacao %}
+                <p><strong>Observação:</strong> {{ caixa.observacao }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Movimentos</h2>
+        </div>
+
+        {% if movimentos %}
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Tipo</th>
+                            <th>Categoria</th>
+                            <th>Descrição</th>
+                            <th>Forma Pagamento</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in movimentos %}
+                        <tr>
+                            <td>{{ m.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                {% if m.tipo == 'entrada' %}
+                                    <span class="badge badge-success">Entrada</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Saída</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge badge-info">{{ m.categoria }}</span></td>
+                            <td>{{ m.descricao }}</td>
+                            <td>{{ m.forma_pagamento or '-' }}</td>
+                            <td class="{{ 'text-success' if m.tipo == 'entrada' else 'text-danger' }}">
+                                <strong>{{ '+' if m.tipo == 'entrada' else '-' }} R$ {{ "%.2f"|format(m.valor) }}</strong>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center text-muted">Nenhum movimento registrado.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

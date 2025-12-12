@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Estoque Baixo - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Produtos com Estoque Baixo</h1>
+        <a href="{{ url_for('produtos.listar') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+
+    {% if produtos %}
+        <div class="alert alert-warning">
+            <strong>⚠️ Atenção!</strong> Os seguintes produtos estão com estoque abaixo do mínimo:
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Quantidade Atual</th>
+                        <th>Estoque Mínimo</th>
+                        <th>Diferença</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in produtos %}
+                    <tr>
+                        <td><strong>{{ p.nome }}</strong></td>
+                        <td>{{ p.qtd }}</td>
+                        <td>{{ p.estoque_minimo }}</td>
+                        <td class="text-danger">
+                            <strong>{{ p.estoque_minimo - p.qtd }}</strong> unidades
+                        </td>
+                        <td>
+                            <a href="{{ url_for('movimentos.entrada') }}?produto_id={{ p.id }}" class="btn btn-success btn-sm">Adicionar Estoque</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center text-success">✅ Todos os produtos estão com estoque adequado!</p>
+    {% endif %}
+</div>
+{% endblock %}

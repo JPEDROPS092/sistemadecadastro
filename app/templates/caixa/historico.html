@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Histórico de Caixas - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Histórico de Caixas</h1>
+        <a href="{{ url_for('caixa.index') }}" class="btn btn-primary">Voltar ao Caixa</a>
+    </div>
+
+    {% if caixas %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Abertura</th>
+                        <th>Fechamento</th>
+                        <th>Saldo Inicial</th>
+                        <th>Entradas</th>
+                        <th>Saídas</th>
+                        <th>Saldo Final</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in caixas %}
+                    <tr>
+                        <td>{{ c.id }}</td>
+                        <td>{{ c.data_abertura.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ c.data_fechamento.strftime('%d/%m/%Y %H:%M') if c.data_fechamento else '-' }}</td>
+                        <td>R$ {{ "%.2f"|format(c.saldo_inicial) }}</td>
+                        <td class="text-success">R$ {{ "%.2f"|format(c.total_entradas) }}</td>
+                        <td class="text-danger">R$ {{ "%.2f"|format(c.total_saidas) }}</td>
+                        <td><strong>R$ {{ "%.2f"|format(c.saldo_final if c.status == 'fechado' else c.saldo_calculado) }}</strong></td>
+                        <td>
+                            {% if c.status == 'aberto' %}
+                                <span class="badge badge-success">Aberto</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Fechado</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('caixa.detalhes', id=c.id) }}" class="btn btn-primary btn-sm">Ver Detalhes</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center text-muted">Nenhum caixa registrado.</p>
+    {% endif %}
+</div>
+{% endblock %}

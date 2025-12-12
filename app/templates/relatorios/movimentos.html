@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Movimentos - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">📊 Relatório de Movimentos</h1>
+        <a href="{{ url_for('relatorios.index') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+
+    <div class="mb-3">
+        <a href="{{ url_for('relatorios.movimentos', periodo='dia') }}" class="btn {{ 'btn-primary' if periodo == 'dia' else 'btn-secondary' }}">Hoje</a>
+        <a href="{{ url_for('relatorios.movimentos', periodo='semana') }}" class="btn {{ 'btn-primary' if periodo == 'semana' else 'btn-secondary' }}">7 Dias</a>
+        <a href="{{ url_for('relatorios.movimentos', periodo='mes') }}" class="btn {{ 'btn-primary' if periodo == 'mes' else 'btn-secondary' }}">30 Dias</a>
+    </div>
+
+    <div class="dashboard-cards">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Total Compras</div>
+                    <div class="stat-card-value text-danger">R$ {{ "%.2f"|format(relatorio.total_entradas) }}</div>
+                </div>
+                <div class="stat-card-icon danger">📥</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Total Vendas</div>
+                    <div class="stat-card-value text-success">R$ {{ "%.2f"|format(relatorio.total_saidas) }}</div>
+                </div>
+                <div class="stat-card-icon success">📤</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Lucro</div>
+                    <div class="stat-card-value {{ 'text-success' if relatorio.lucro > 0 else 'text-danger' }}">
+                        R$ {{ "%.2f"|format(relatorio.lucro) }}
+                    </div>
+                </div>
+                <div class="stat-card-icon {{ 'success' if relatorio.lucro > 0 else 'danger' }}">📈</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Qtd Vendas</div>
+                    <div class="stat-card-value">{{ relatorio.quantidade_saidas }}</div>
+                </div>
+                <div class="stat-card-icon primary">📦</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <h2 class="card-title">Gráfico de Lucro</h2>
+        </div>
+        <canvas id="graficoLucro" height="80"></canvas>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Detalhamento de Movimentos</h2>
+        </div>
+
+        {% if relatorio.movimentos %}
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Produto</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Valor Unitário</th>
+                            <th>Valor Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in relatorio.movimentos %}
+                        <tr>
+                            <td>{{ m.data[:10] }}</td>
+                            <td><strong>{{ m.produto_nome }}</strong></td>
+                            <td>
+                                {% if m.tipo == 'entrada' %}
+                                    <span class="badge badge-danger">Compra</span>
+                                {% else %}
+                                    <span class="badge badge-success">Venda</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ m.quantidade }}</td>
+                            <td>R$ {{ "%.2f"|format(m.valor_unitario) }}</td>
+                            <td class="{{ 'text-danger' if m.tipo == 'entrada' else 'text-success' }}">
+                                <strong>R$ {{ "%.2f"|format(m.valor_total) }}</strong>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center text-muted">Nenhum movimento neste período.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('graficoLucro').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Compras', 'Vendas', 'Lucro'],
+            datasets: [{
+                label: 'Valores (R$)',
+                data: [{{ relatorio.total_entradas }}, {{ relatorio.total_saidas }}, {{ relatorio.lucro }}],
+                backgroundColor: ['#ef4444', '#10b981', {{ "'#10b981'" if relatorio.lucro > 0 else "'#ef4444'" }}]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

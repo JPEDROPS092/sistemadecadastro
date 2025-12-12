@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Produtos - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Produtos</h1>
+        <div>
+            <a href="{{ url_for('produtos.estoque_baixo') }}" class="btn btn-warning">Estoque Baixo</a>
+            <a href="{{ url_for('produtos.novo') }}" class="btn btn-primary">Novo Produto</a>
+        </div>
+    </div>
+
+    {% if produtos %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Quantidade</th>
+                        <th>Estoque Mínimo</th>
+                        <th>Valor Compra</th>
+                        <th>Valor Venda</th>
+                        <th>Margem</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in produtos %}
+                    <tr>
+                        <td>{{ p.id }}</td>
+                        <td><strong>{{ p.nome }}</strong></td>
+                        <td>
+                            {{ p.qtd }}
+                            {% if p.estoque_baixo %}
+                                <span class="badge badge-warning">Baixo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ p.estoque_minimo }}</td>
+                        <td>R$ {{ "%.2f"|format(p.valor_compra) }}</td>
+                        <td>R$ {{ "%.2f"|format(p.valor_venda) }}</td>
+                        <td class="{{ 'text-success' if p.margem_lucro > 0 else 'text-danger' }}">
+                            {{ "%.1f"|format(p.margem_lucro) }}%
+                        </td>
+                        <td>
+                            {% if p.ativo %}
+                                <span class="badge badge-success">Ativo</span>
+                            {% else %}
+                                <span class="badge badge-danger">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td class="table-actions">
+                            <a href="{{ url_for('produtos.editar', id=p.id) }}" class="btn btn-primary btn-sm">Editar</a>
+                            <form method="POST" action="{{ url_for('produtos.excluir', id=p.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Deseja realmente excluir este produto?')">Excluir</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center text-muted">Nenhum produto cadastrado.</p>
+    {% endif %}
+</div>
+{% endblock %}

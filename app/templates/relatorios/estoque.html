@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Estoque - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">📦 Relatório de Estoque</h1>
+        <a href="{{ url_for('relatorios.index') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+
+    <div class="dashboard-cards">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Valor Total Investido</div>
+                    <div class="stat-card-value">R$ {{ "%.2f"|format(relatorio.total_valor_estoque) }}</div>
+                </div>
+                <div class="stat-card-icon primary">💵</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Valor Potencial de Venda</div>
+                    <div class="stat-card-value">R$ {{ "%.2f"|format(relatorio.total_valor_venda) }}</div>
+                </div>
+                <div class="stat-card-icon success">💰</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Lucro Potencial</div>
+                    <div class="stat-card-value text-success">R$ {{ "%.2f"|format(relatorio.lucro_potencial) }}</div>
+                </div>
+                <div class="stat-card-icon success">📈</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Produtos Estoque Baixo</div>
+                    <div class="stat-card-value {{ 'text-danger' if relatorio.produtos_estoque_baixo > 0 }}">{{ relatorio.produtos_estoque_baixo }}</div>
+                </div>
+                <div class="stat-card-icon warning">⚠️</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Estoque Mínimo</th>
+                    <th>Valor Compra</th>
+                    <th>Valor Venda</th>
+                    <th>Margem</th>
+                    <th>Valor em Estoque</th>
+                    <th>Valor Potencial</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in relatorio.produtos %}
+                <tr>
+                    <td><strong>{{ p.nome }}</strong></td>
+                    <td>{{ p.qtd }}</td>
+                    <td>{{ p.estoque_minimo }}</td>
+                    <td>R$ {{ "%.2f"|format(p.valor_compra) }}</td>
+                    <td>R$ {{ "%.2f"|format(p.valor_venda) }}</td>
+                    <td class="{{ 'text-success' if p.margem_lucro > 0 else 'text-danger' }}">
+                        {{ "%.1f"|format(p.margem_lucro) }}%
+                    </td>
+                    <td>R$ {{ "%.2f"|format(p.qtd * p.valor_compra) }}</td>
+                    <td>R$ {{ "%.2f"|format(p.qtd * p.valor_venda) }}</td>
+                    <td>
+                        {% if p.estoque_baixo %}
+                            <span class="badge badge-warning">Estoque Baixo</span>
+                        {% else %}
+                            <span class="badge badge-success">OK</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

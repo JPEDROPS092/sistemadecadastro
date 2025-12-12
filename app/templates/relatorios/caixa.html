@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Caixa - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">💰 Relatório de Caixa</h1>
+        <a href="{{ url_for('relatorios.index') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+
+    {% if relatorio %}
+        <div class="dashboard-cards">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-label">Saldo Inicial</div>
+                        <div class="stat-card-value">R$ {{ "%.2f"|format(relatorio.saldo_inicial) }}</div>
+                    </div>
+                    <div class="stat-card-icon primary">💵</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-label">Total Entradas</div>
+                        <div class="stat-card-value text-success">R$ {{ "%.2f"|format(relatorio.total_entradas) }}</div>
+                    </div>
+                    <div class="stat-card-icon success">➕</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-label">Total Saídas</div>
+                        <div class="stat-card-value text-danger">R$ {{ "%.2f"|format(relatorio.total_saidas) }}</div>
+                    </div>
+                    <div class="stat-card-icon danger">➖</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-label">Saldo Atual</div>
+                        <div class="stat-card-value">R$ {{ "%.2f"|format(relatorio.saldo_calculado) }}</div>
+                    </div>
+                    <div class="stat-card-icon warning">💰</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Informações do Caixa</h2>
+            </div>
+            <div>
+                <p><strong>Abertura:</strong> {{ relatorio.data_abertura[:19] }}</p>
+                {% if relatorio.data_fechamento %}
+                    <p><strong>Fechamento:</strong> {{ relatorio.data_fechamento[:19] }}</p>
+                {% endif %}
+                <p><strong>Status:</strong>
+                    {% if relatorio.status == 'aberto' %}
+                        <span class="badge badge-success">Aberto</span>
+                    {% else %}
+                        <span class="badge badge-secondary">Fechado</span>
+                    {% endif %}
+                </p>
+                {% if relatorio.observacao %}
+                    <p><strong>Observação:</strong> {{ relatorio.observacao }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Gráfico de Movimentação</h2>
+            </div>
+            <canvas id="graficoCaixa" height="80"></canvas>
+        </div>
+    {% else %}
+        <p class="text-center text-muted">Nenhum caixa aberto no momento.</p>
+    {% endif %}
+</div>
+
+{% if relatorio %}
+<script>
+    const ctx = document.getElementById('graficoCaixa').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Saldo Inicial', 'Entradas', 'Saídas', 'Saldo Atual'],
+            datasets: [{
+                label: 'Valores (R$)',
+                data: [
+                    {{ relatorio.saldo_inicial }},
+                    {{ relatorio.total_entradas }},
+                    {{ relatorio.total_saidas }},
+                    {{ relatorio.saldo_calculado }}
+                ],
+                backgroundColor: ['#2563eb', '#10b981', '#ef4444', '#f59e0b']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

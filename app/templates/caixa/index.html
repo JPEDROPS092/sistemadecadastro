@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Controle de Caixa - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Controle de Caixa</h1>
+        <div>
+            <a href="{{ url_for('caixa.historico') }}" class="btn btn-secondary">Histórico</a>
+            {% if caixa %}
+                <button type="button" class="btn btn-danger" onclick="document.getElementById('fecharCaixaModal').style.display='block'">Fechar Caixa</button>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not caixa %}
+        <div class="alert alert-info">
+            <strong>ℹ️ Informação:</strong> Nenhum caixa está aberto no momento.
+        </div>
+
+        <form method="POST" action="{{ url_for('caixa.abrir') }}">
+            <div class="form-group">
+                <label for="saldo_inicial" class="form-label">Saldo Inicial (R$)</label>
+                <input type="number" id="saldo_inicial" name="saldo_inicial" class="form-control" step="0.01" min="0" value="0" required>
+            </div>
+
+            <div class="form-group">
+                <label for="observacao" class="form-label">Observação</label>
+                <input type="text" id="observacao" name="observacao" class="form-control" placeholder="Opcional">
+            </div>
+
+            <button type="submit" class="btn btn-success">Abrir Caixa</button>
+        </form>
+    {% else %}
+        <div class="dashboard-cards">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-label">Saldo Inicial</div>
+                        <div class="stat-card-value">R$ {{ "%.2f"|format(caixa.saldo_inicial) }}</div>
+                    </div>
+                    <div class="stat-card-icon primary">💵</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-label">Entradas</div>
+                        <div class="stat-card-value text-success">R$ {{ "%.2f"|format(caixa.total_entradas) }}</div>
+                    </div>
+                    <div class="stat-card-icon success">➕</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-label">Saídas</div>
+                        <div class="stat-card-value text-danger">R$ {{ "%.2f"|format(caixa.total_saidas) }}</div>
+                    </div>
+                    <div class="stat-card-icon danger">➖</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <div class="stat-card-label">Saldo Atual</div>
+                        <div class="stat-card-value">R$ {{ "%.2f"|format(caixa.saldo_calculado) }}</div>
+                    </div>
+                    <div class="stat-card-icon warning">💰</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Novo Movimento</h2>
+            </div>
+
+            <form method="POST" action="{{ url_for('caixa.movimento') }}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tipo" class="form-label">Tipo</label>
+                        <select id="tipo" name="tipo" class="form-control" required>
+                            <option value="entrada">Entrada</option>
+                            <option value="saida">Saída</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="categoria" class="form-label">Categoria</label>
+                        <select id="categoria" name="categoria" class="form-control" required>
+                            <option value="venda">Venda</option>
+                            <option value="compra">Compra</option>
+                            <option value="despesa">Despesa</option>
+                            <option value="receita">Receita</option>
+                            <option value="retirada">Retirada</option>
+                            <option value="deposito">Depósito</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="forma_pagamento" class="form-label">Forma de Pagamento</label>
+                        <select id="forma_pagamento" name="forma_pagamento" class="form-control">
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="cartao">Cartão</option>
+                            <option value="pix">PIX</option>
+                            <option value="transferencia">Transferência</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <input type="text" id="descricao" name="descricao" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="valor" class="form-label">Valor (R$)</label>
+                        <input type="number" id="valor" name="valor" class="form-control" step="0.01" min="0.01" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Registrar Movimento</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Movimentos do Caixa</h2>
+            </div>
+
+            {% if movimentos %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Tipo</th>
+                                <th>Categoria</th>
+                                <th>Descrição</th>
+                                <th>Forma Pagamento</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in movimentos %}
+                            <tr>
+                                <td>{{ m.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    {% if m.tipo == 'entrada' %}
+                                        <span class="badge badge-success">Entrada</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Saída</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge badge-info">{{ m.categoria }}</span></td>
+                                <td>{{ m.descricao }}</td>
+                                <td>{{ m.forma_pagamento or '-' }}</td>
+                                <td class="{{ 'text-success' if m.tipo == 'entrada' else 'text-danger' }}">
+                                    <strong>{{ '+' if m.tipo == 'entrada' else '-' }} R$ {{ "%.2f"|format(m.valor) }}</strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted">Nenhum movimento registrado neste caixa.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal Fechar Caixa -->
+{% if caixa %}
+<div id="fecharCaixaModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.4);">
+    <div style="background-color:white; margin:10% auto; padding:20px; border-radius:8px; width:90%; max-width:500px;">
+        <h2>Fechar Caixa</h2>
+        <p><strong>Saldo Calculado:</strong> R$ {{ "%.2f"|format(caixa.saldo_calculado) }}</p>
+
+        <form method="POST" action="{{ url_for('caixa.fechar') }}">
+            <div class="form-group">
+                <label for="observacao_fechamento" class="form-label">Observação de Fechamento</label>
+                <textarea id="observacao_fechamento" name="observacao" class="form-control" rows="3"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-danger">Confirmar Fechamento</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('fecharCaixaModal').style.display='none'">Cancelar</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

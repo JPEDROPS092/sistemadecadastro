@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Fluxo Diário - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">📈 Fluxo Diário Completo</h1>
+        <a href="{{ url_for('relatorios.index') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+
+    <p><strong>Data:</strong> {{ relatorio.data[:10] }}</p>
+
+    <h2 class="card-title mt-3">Movimentos de Estoque</h2>
+    <div class="dashboard-cards">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Compras do Dia</div>
+                    <div class="stat-card-value text-danger">R$ {{ "%.2f"|format(relatorio.compras) }}</div>
+                </div>
+                <div class="stat-card-icon danger">🛒</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Vendas do Dia</div>
+                    <div class="stat-card-value text-success">R$ {{ "%.2f"|format(relatorio.vendas) }}</div>
+                </div>
+                <div class="stat-card-icon success">💵</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Lucro Bruto</div>
+                    <div class="stat-card-value {{ 'text-success' if relatorio.lucro_bruto > 0 else 'text-danger' }}">
+                        R$ {{ "%.2f"|format(relatorio.lucro_bruto) }}
+                    </div>
+                </div>
+                <div class="stat-card-icon {{ 'success' if relatorio.lucro_bruto > 0 else 'danger' }}">📊</div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="card-title mt-3">Fluxo de Caixa</h2>
+    <div class="dashboard-cards">
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Entradas em Caixa</div>
+                    <div class="stat-card-value text-success">R$ {{ "%.2f"|format(relatorio.entradas_caixa) }}</div>
+                </div>
+                <div class="stat-card-icon success">➕</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Saídas de Caixa</div>
+                    <div class="stat-card-value text-danger">R$ {{ "%.2f"|format(relatorio.saidas_caixa) }}</div>
+                </div>
+                <div class="stat-card-icon danger">➖</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div>
+                    <div class="stat-card-label">Saldo do Dia</div>
+                    <div class="stat-card-value {{ 'text-success' if relatorio.saldo_caixa > 0 else 'text-danger' }}">
+                        R$ {{ "%.2f"|format(relatorio.saldo_caixa) }}
+                    </div>
+                </div>
+                <div class="stat-card-icon warning">💰</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-2 mt-3">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Movimentos de Estoque do Dia</h2>
+            </div>
+
+            {% if relatorio.movimentos_estoque %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Produto</th>
+                                <th>Tipo</th>
+                                <th>Qtd</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in relatorio.movimentos_estoque %}
+                            <tr>
+                                <td>{{ m.data[11:16] }}</td>
+                                <td>{{ m.produto_nome }}</td>
+                                <td>
+                                    {% if m.tipo == 'entrada' %}
+                                        <span class="badge badge-danger">Compra</span>
+                                    {% else %}
+                                        <span class="badge badge-success">Venda</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ m.quantidade }}</td>
+                                <td>R$ {{ "%.2f"|format(m.valor_total) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted">Nenhum movimento de estoque hoje.</p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Movimentos de Caixa do Dia</h2>
+            </div>
+
+            {% if relatorio.movimentos_caixa %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Descrição</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in relatorio.movimentos_caixa %}
+                            <tr>
+                                <td>{{ m.data[11:16] }}</td>
+                                <td>{{ m.descricao }}</td>
+                                <td>
+                                    {% if m.tipo == 'entrada' %}
+                                        <span class="badge badge-success">Entrada</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Saída</span>
+                                    {% endif %}
+                                </td>
+                                <td class="{{ 'text-success' if m.tipo == 'entrada' else 'text-danger' }}">
+                                    {{ '+' if m.tipo == 'entrada' else '-' }} R$ {{ "%.2f"|format(m.valor) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted">Nenhum movimento de caixa hoje.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

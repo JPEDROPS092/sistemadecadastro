@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Nova Saída - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">Registrar Saída de Estoque (Venda)</h1>
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="produto_id" class="form-label">Produto</label>
+            <select id="produto_id" name="produto_id" class="form-control" required onchange="atualizarInfo()">
+                <option value="">Selecione um produto</option>
+                {% for p in produtos %}
+                    <option value="{{ p.id }}" data-estoque="{{ p.qtd }}" data-valor="{{ p.valor_venda }}" {{ 'selected' if request.args.get('produto_id') == p.id|string }}>
+                        {{ p.nome }} - Estoque: {{ p.qtd }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="quantidade" class="form-label">Quantidade</label>
+                <input type="number" id="quantidade" name="quantidade" class="form-control" min="1" required>
+                <small id="estoque-info" class="text-muted"></small>
+            </div>
+
+            <div class="form-group">
+                <label for="valor_unitario" class="form-label">Valor Unitário (R$)</label>
+                <input type="number" id="valor_unitario" name="valor_unitario" class="form-control" step="0.01" min="0" placeholder="Deixe vazio para usar o valor de venda cadastrado">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="forma_pagamento" class="form-label">Forma de Pagamento</label>
+            <select id="forma_pagamento" name="forma_pagamento" class="form-control">
+                <option value="dinheiro">Dinheiro</option>
+                <option value="cartao">Cartão</option>
+                <option value="pix">PIX</option>
+                <option value="outro">Outro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="observacao" class="form-label">Observação</label>
+            <input type="text" id="observacao" name="observacao" class="form-control" placeholder="Opcional">
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-danger">Registrar Saída</button>
+            <a href="{{ url_for('movimentos.listar') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function atualizarInfo() {
+        const select = document.getElementById('produto_id');
+        const valorInput = document.getElementById('valor_unitario');
+        const quantidadeInput = document.getElementById('quantidade');
+        const estoqueInfo = document.getElementById('estoque-info');
+        const selectedOption = select.options[select.selectedIndex];
+
+        if (selectedOption.dataset.valor) {
+            valorInput.placeholder = `Valor padrão: R$ ${parseFloat(selectedOption.dataset.valor).toFixed(2)}`;
+        }
+
+        if (selectedOption.dataset.estoque) {
+            const estoque = parseInt(selectedOption.dataset.estoque);
+            estoqueInfo.textContent = `Estoque disponível: ${estoque} unidades`;
+            quantidadeInput.max = estoque;
+        }
+    }
+
+    // Validar quantidade antes de enviar
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const select = document.getElementById('produto_id');
+        const quantidade = parseInt(document.getElementById('quantidade').value);
+        const selectedOption = select.options[select.selectedIndex];
+        const estoque = parseInt(selectedOption.dataset.estoque);
+
+        if (quantidade > estoque) {
+            e.preventDefault();
+            alert(`Quantidade inválida! Estoque disponível: ${estoque} unidades`);
+        }
+    });
+
+    // Atualizar ao carregar
+    document.addEventListener('DOMContentLoaded', atualizarInfo);
+</script>
+{% endblock %}

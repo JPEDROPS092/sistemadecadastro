@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Gestão{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="{{ url_for('main.index') }}" class="navbar-brand">📊 Sistema de Gestão</a>
+
+            <button class="mobile-menu-btn" onclick="toggleMenu()">☰</button>
+
+            <ul class="navbar-menu" id="navbarMenu">
+                <li><a href="{{ url_for('main.index') }}" class="{{ 'active' if request.endpoint == 'main.index' }}">Dashboard</a></li>
+                <li><a href="{{ url_for('produtos.listar') }}" class="{{ 'active' if 'produtos' in request.endpoint }}">Produtos</a></li>
+                <li><a href="{{ url_for('movimentos.listar') }}" class="{{ 'active' if 'movimentos' in request.endpoint }}">Movimentos</a></li>
+                <li><a href="{{ url_for('caixa.index') }}" class="{{ 'active' if 'caixa' in request.endpoint }}">Caixa</a></li>
+                <li><a href="{{ url_for('relatorios.index') }}" class="{{ 'active' if 'relatorios' in request.endpoint }}">Relatórios</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('navbarMenu').classList.toggle('active');
+        }
+
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('navbarMenu');
+            const btn = document.querySelector('.mobile-menu-btn');
+
+            if (!menu.contains(event.target) && !btn.contains(event.target)) {
+                menu.classList.remove('active');
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
