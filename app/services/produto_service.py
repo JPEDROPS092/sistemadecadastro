@@ -2,7 +2,11 @@ from app.models import db, Produto
 
 class ProdutoService:
     @staticmethod
-    def criar_produto(nome, valor_compra, valor_venda, qtd=0, estoque_minimo=5):
+    def criar_produto(nome, valor_compra, valor_venda, qtd=0, quantidade=None, estoque_minimo=5):
+        # Aceitar 'quantidade' como alias para 'qtd'
+        if quantidade is not None:
+            qtd = quantidade
+            
         produto = Produto(
             nome=nome,
             valor_compra=valor_compra,
@@ -41,10 +45,27 @@ class ProdutoService:
     def excluir_produto(id):
         produto = Produto.query.get(id)
         if produto:
-            produto.ativo = False
-            db.session.commit()
-            return True
+            # Verifica se há movimentos associados
+            if produto.movimentos:
+                # Se há movimentos, apenas marca como inativo
+                produto.ativo = False
+                db.session.commit()
+                return True
+            else:
+                # Se não há movimentos, pode excluir fisicamente
+                db.session.delete(produto)
+                db.session.commit()
+                return True
         return False
+
+    @staticmethod
+    def atualizar_estoque(id, quantidade_alteracao):
+        produto = Produto.query.get(id)
+        if produto:
+            produto.qtd += quantidade_alteracao
+            db.session.commit()
+            return produto
+        return None
 
     @staticmethod
     def produtos_estoque_baixo():

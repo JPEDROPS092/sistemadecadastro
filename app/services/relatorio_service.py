@@ -16,7 +16,14 @@ class RelatorioService:
             'total_valor_estoque': total_valor_estoque,
             'total_valor_venda': total_valor_venda,
             'lucro_potencial': total_valor_venda - total_valor_estoque,
-            'produtos_estoque_baixo': len(produtos_estoque_baixo)
+            'produtos_estoque_baixo': len(produtos_estoque_baixo),
+            'resumo': {
+                'total_produtos': len(produtos),
+                'valor_total_estoque': total_valor_estoque,
+                'valor_total_venda': total_valor_venda,
+                'lucro_potencial': total_valor_venda - total_valor_estoque,
+                'produtos_estoque_baixo': len(produtos_estoque_baixo)
+            }
         }
 
     @staticmethod
@@ -45,7 +52,15 @@ class RelatorioService:
             'lucro': total_saidas - total_entradas,
             'quantidade_entradas': sum(m.quantidade for m in entradas),
             'quantidade_saidas': sum(m.quantidade for m in saidas),
-            'movimentos': [m.to_dict() for m in movimentos]
+            'movimentos': [m.to_dict() for m in movimentos],
+            'resumo': {
+                'total_entradas': total_entradas,
+                'total_saidas': total_saidas,
+                'lucro': total_saidas - total_entradas,
+                'quantidade_movimentos': len(movimentos),
+                'quantidade_entradas': sum(m.quantidade for m in entradas),
+                'quantidade_saidas': sum(m.quantidade for m in saidas)
+            }
         }
 
     @staticmethod
@@ -72,11 +87,27 @@ class RelatorioService:
             caixa = Caixa.query.get(caixa_id)
             if not caixa:
                 return None
-            return caixa.to_dict()
+            dados_caixa = caixa.to_dict()
+            dados_caixa['resumo_geral'] = {
+                'saldo_inicial': caixa.saldo_inicial,
+                'saldo_final': caixa.saldo_final if caixa.status == 'fechado' else caixa.saldo_atual,
+                'total_entradas': caixa.total_entradas,
+                'total_saidas': caixa.total_saidas,
+                'resultado': (caixa.saldo_final if caixa.status == 'fechado' else caixa.saldo_atual) - caixa.saldo_inicial
+            }
+            return dados_caixa
         else:
             caixa_aberto = Caixa.query.filter_by(status='aberto').first()
             if caixa_aberto:
-                return caixa_aberto.to_dict()
+                dados_caixa = caixa_aberto.to_dict()
+                dados_caixa['resumo_geral'] = {
+                    'saldo_inicial': caixa_aberto.saldo_inicial,
+                    'saldo_final': caixa_aberto.saldo_atual,
+                    'total_entradas': caixa_aberto.total_entradas,
+                    'total_saidas': caixa_aberto.total_saidas,
+                    'resultado': caixa_aberto.saldo_atual - caixa_aberto.saldo_inicial
+                }
+                return dados_caixa
             return None
 
     @staticmethod
@@ -143,6 +174,10 @@ class RelatorioService:
             Movimento.data >= semana_atras
         ).group_by(Produto.id).order_by(func.sum(Movimento.quantidade).desc()).limit(5).all()
 
+        # Valor total do estoque
+        produtos_ativos = Produto.query.filter_by(ativo=True).all()
+        valor_total_estoque = sum(p.qtd * p.valor_compra for p in produtos_ativos)
+
         return {
             'total_produtos': total_produtos,
             'produtos_estoque_baixo': produtos_estoque_baixo,
@@ -150,6 +185,7 @@ class RelatorioService:
             'compras_hoje': compras_hoje,
             'lucro_hoje': vendas_hoje - compras_hoje,
             'saldo_caixa': saldo_caixa,
+            'valor_total_estoque': valor_total_estoque,
             'caixa_status': caixa_aberto.status if caixa_aberto else 'fechado',
             'produtos_mais_vendidos': [{'nome': p[0], 'quantidade': p[1]} for p in produtos_mais_vendidos]
         }

@@ -1,31 +1,401 @@
 {% extends "base.html" %}
+
+{% block title %}Produtos - Sistema de Gestão Corporativo{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h3>Produtos</h3>
-  <a href="{{ url_for('produto_form') }}" class="btn btn-primary">Novo Produto</a>
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 text-corporate-primary mb-2">
+                <i class="fas fa-box me-3"></i>Gestão de Produtos
+            </h1>
+            <p class="text-muted mb-0">Gerencie seu catálogo de produtos e controle de estoque</p>
+        </div>
+        <div>
+            <a href="{{ url_for('produtos.novo') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Novo Produto
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-end">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-search me-1"></i>Pesquisar Produtos
+                    </label>
+                    <input type="text" id="searchInput" class="form-control" 
+                           placeholder="Digite o nome, SKU ou categoria...">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-filter me-1"></i>Categoria
+                    </label>
+                    <select id="categoryFilter" class="form-select">
+                        <option value="">Todas as categorias</option>
+                        {% for categoria in categorias %}
+                            <option value="{{ categoria }}">{{ categoria }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-layer-group me-1"></i>Status Estoque
+                    </label>
+                    <select id="stockFilter" class="form-select">
+                        <option value="">Todos os produtos</option>
+                        <option value="normal">Estoque normal</option>
+                        <option value="baixo">Estoque baixo</option>
+                        <option value="zerado">Estoque zerado</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                        <i class="fas fa-times me-1"></i>Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>Lista de Produtos
+                <span class="badge bg-secondary ms-2" id="productCount">{{ produtos|length }}</span>
+            </h5>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" onclick="exportProducts('csv')" 
+                        data-bs-toggle="tooltip" title="Exportar CSV">
+                    <i class="fas fa-file-csv"></i>
+                </button>
+                <button class="btn btn-outline-secondary" onclick="exportProducts('pdf')"
+                        data-bs-toggle="tooltip" title="Exportar PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            {% if produtos %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="productsTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-column="nome">
+                                <i class="fas fa-tag me-1"></i>Nome
+                                <i class="fas fa-sort text-muted"></i>
+                            </th>
+                            <th class="sortable" data-column="sku">
+                                <i class="fas fa-barcode me-1"></i>SKU
+                                <i class="fas fa-sort text-muted"></i>
+                            </th>
+                            <th class="sortable text-center" data-column="preco">
+                                <i class="fas fa-dollar-sign me-1"></i>Preço
+                                <i class="fas fa-sort text-muted"></i>
+                            </th>
+                            <th class="sortable text-center" data-column="quantidade">
+                                <i class="fas fa-cubes me-1"></i>Estoque
+                                <i class="fas fa-sort text-muted"></i>
+                            </th>
+                            <th class="sortable" data-column="categoria">
+                                <i class="fas fa-folder me-1"></i>Categoria
+                                <i class="fas fa-sort text-muted"></i>
+                            </th>
+                            <th class="text-center">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Alerta
+                            </th>
+                            <th class="text-center">
+                                <i class="fas fa-cogs me-1"></i>Ações
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in produtos %}
+                        <tr class="product-row {% if p.quantidade == 0 %}table-danger{% elif p.quantidade <= p.minimo_alerta %}table-warning{% endif %}"
+                            data-nome="{{ p.nome|lower }}"
+                            data-sku="{{ p.sku|lower if p.sku else '' }}"
+                            data-categoria="{{ p.categoria|lower if p.categoria else '' }}"
+                            data-quantidade="{{ p.quantidade }}"
+                            data-minimo="{{ p.minimo_alerta }}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if p.quantidade == 0 %}
+                                        <i class="fas fa-times-circle text-danger me-2" 
+                                           data-bs-toggle="tooltip" title="Produto sem estoque"></i>
+                                    {% elif p.quantidade <= p.minimo_alerta %}
+                                        <i class="fas fa-exclamation-triangle text-warning me-2" 
+                                           data-bs-toggle="tooltip" title="Estoque baixo"></i>
+                                    {% else %}
+                                        <i class="fas fa-check-circle text-success me-2" 
+                                           data-bs-toggle="tooltip" title="Estoque normal"></i>
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ p.nome }}</strong>
+                                        {% if p.descricao %}
+                                        <br><small class="text-muted">{{ p.descricao[:50] }}{% if p.descricao|length > 50 %}...{% endif %}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if p.sku %}
+                                    <code class="bg-light px-2 py-1 rounded">{{ p.sku }}</code>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-bold text-success">R$ {{ '%.2f'|format(p.preco) }}</span>
+                                {% if p.preco_custo %}
+                                <br><small class="text-muted">Custo: R$ {{ '%.2f'|format(p.preco_custo) }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if p.quantidade == 0 %}
+                                    <span class="badge bg-danger">Sem estoque</span>
+                                {% elif p.quantidade <= p.minimo_alerta %}
+                                    <span class="badge bg-warning text-dark">{{ p.quantidade }}</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ p.quantidade }}</span>
+                                {% endif %}
+                                
+                                {% if p.unidade %}
+                                <br><small class="text-muted">{{ p.unidade }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.categoria %}
+                                    <span class="badge bg-secondary">{{ p.categoria }}</span>
+                                {% else %}
+                                    <span class="text-muted">Sem categoria</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <small class="text-muted me-2">Min:</small>
+                                    <span class="badge bg-info">{{ p.minimo_alerta }}</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a class="btn btn-primary" 
+                                       href="{{ url_for('produtos.editar', produto_id=p.id) }}"
+                                       data-bs-toggle="tooltip" title="Editar produto">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a class="btn btn-info" 
+                                       href="{{ url_for('produtos.detalhes', produto_id=p.id) }}"
+                                       data-bs-toggle="tooltip" title="Ver detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="btn btn-secondary dropdown-toggle" 
+                                            data-bs-toggle="dropdown" aria-expanded="false"
+                                            data-bs-tooltip="tooltip" title="Mais ações">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" 
+                                               href="{{ url_for('movimentos.novo', produto_id=p.id) }}">
+                                                <i class="fas fa-plus text-success me-2"></i>Entrada
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" 
+                                               href="{{ url_for('movimentos.novo', produto_id=p.id, tipo='saida') }}">
+                                                <i class="fas fa-minus text-warning me-2"></i>Saída
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" 
+                                               href="{{ url_for('produtos.duplicar', produto_id=p.id) }}">
+                                                <i class="fas fa-copy text-info me-2"></i>Duplicar
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="#"
+                                               onclick="if(confirmAction('Deletar produto {{ p.nome }}? Esta ação não pode ser desfeita.')) { 
+                                                   document.getElementById('delete-form-{{ p.id }}').submit(); 
+                                               }">
+                                                <i class="fas fa-trash me-2"></i>Deletar
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <form id="delete-form-{{ p.id }}" method="post" 
+                                      action="{{ url_for('produtos.deletar', produto_id=p.id) }}" 
+                                      style="display: none;">
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if pagination %}
+            <div class="card-footer">
+                <nav aria-label="Navegação de páginas">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('produtos.lista', page=pagination.prev_num) if pagination.has_prev }}">
+                                <i class="fas fa-chevron-left"></i> Anterior
+                            </a>
+                        </li>
+                        
+                        {% for page_num in pagination.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != pagination.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('produtos.lista', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('produtos.lista', page=pagination.next_num) if pagination.has_next }}">
+                                Próxima <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-box-open fa-4x text-muted mb-4"></i>
+                <h4 class="text-muted mb-3">Nenhum produto cadastrado</h4>
+                <p class="text-muted mb-4">Comece adicionando seus primeiros produtos ao sistema.</p>
+                <a href="{{ url_for('produtos.novo') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Adicionar Primeiro Produto
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
-<table class="table table-striped">
-  <thead>
-    <tr><th>Nome</th><th>SKU</th><th>Preço</th><th>Qtd</th><th>Categoria</th><th>Mínimo Alerta</th><th>Ações</th></tr>
-  </thead>
-  <tbody>
-    {% for p in produtos %}
-    <tr>
-      <td>{{ p.nome }}</td>
-      <td>{{ p.sku or '-' }}</td>
-      <td>R$ {{ '%.2f'|format(p.preco) }}</td>
-      <td>{{ p.quantidade }}</td>
-      <td>{{ p.categoria or '-' }}</td>
-      <td>{{ p.minimo_alerta }}</td>
-      <td>
-        <a class="btn btn-sm btn-secondary" href="{{ url_for('produto_form', produto_id=p.id) }}">Editar</a>
-        <form method="post" action="{{ url_for('produto_deletar', produto_id=p.id) }}" style="display:inline-block" onsubmit="return confirm('Deletar produto?');">
-          <button class="btn btn-sm btn-danger">Deletar</button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const stockFilter = document.getElementById('stockFilter');
+    const productRows = document.querySelectorAll('.product-row');
+    const productCount = document.getElementById('productCount');
+
+    function filterProducts() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const categoryValue = categoryFilter.value.toLowerCase();
+        const stockValue = stockFilter.value;
+        let visibleCount = 0;
+
+        productRows.forEach(row => {
+            const nome = row.dataset.nome;
+            const sku = row.dataset.sku;
+            const categoria = row.dataset.categoria;
+            const quantidade = parseInt(row.dataset.quantidade);
+            const minimo = parseInt(row.dataset.minimo);
+
+            let showRow = true;
+
+            // Search filter
+            if (searchTerm && !nome.includes(searchTerm) && !sku.includes(searchTerm) && !categoria.includes(searchTerm)) {
+                showRow = false;
+            }
+
+            // Category filter
+            if (categoryValue && categoria !== categoryValue) {
+                showRow = false;
+            }
+
+            // Stock filter
+            if (stockValue) {
+                if (stockValue === 'normal' && (quantidade <= minimo || quantidade === 0)) {
+                    showRow = false;
+                } else if (stockValue === 'baixo' && (quantidade > minimo || quantidade === 0)) {
+                    showRow = false;
+                } else if (stockValue === 'zerado' && quantidade !== 0) {
+                    showRow = false;
+                }
+            }
+
+            row.style.display = showRow ? '' : 'none';
+            if (showRow) visibleCount++;
+        });
+
+        productCount.textContent = visibleCount;
+    }
+
+    searchInput.addEventListener('input', filterProducts);
+    categoryFilter.addEventListener('change', filterProducts);
+    stockFilter.addEventListener('change', filterProducts);
+
+    // Clear filters
+    window.clearFilters = function() {
+        searchInput.value = '';
+        categoryFilter.value = '';
+        stockFilter.value = '';
+        filterProducts();
+    };
+
+    // Export functions
+    window.exportProducts = function(format) {
+        // Implementation for export functionality
+        CorporateApp.showToast(`Exportando produtos em formato ${format.toUpperCase()}...`, 'info');
+    };
+
+    // Table sorting
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    sortableHeaders.forEach(header => {
+        header.style.cursor = 'pointer';
+        header.addEventListener('click', function() {
+            const column = this.dataset.column;
+            sortTable(column);
+        });
+    });
+
+    function sortTable(column) {
+        const table = document.getElementById('productsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        rows.sort((a, b) => {
+            let aValue = a.dataset[column] || a.querySelector(`[data-${column}]`)?.textContent || '';
+            let bValue = b.dataset[column] || b.querySelector(`[data-${column}]`)?.textContent || '';
+            
+            if (column === 'preco' || column === 'quantidade') {
+                aValue = parseFloat(aValue) || 0;
+                bValue = parseFloat(bValue) || 0;
+                return aValue - bValue;
+            } else {
+                return aValue.localeCompare(bValue);
+            }
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+});
+</script>
+{% endblock %}
 {% endblock %}

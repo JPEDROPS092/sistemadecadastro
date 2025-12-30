@@ -17,6 +17,16 @@ class Produto(db.Model):
         return f'<Produto {self.nome}>'
 
     @property
+    def quantidade(self):
+        """Alias para qtd para compatibilidade"""
+        return self.qtd
+    
+    @quantidade.setter
+    def quantidade(self, value):
+        """Setter para quantidade"""
+        self.qtd = value
+
+    @property
     def estoque_baixo(self):
         return self.qtd <= self.estoque_minimo
 
@@ -31,6 +41,7 @@ class Produto(db.Model):
             'id': self.id,
             'nome': self.nome,
             'qtd': self.qtd,
+            'quantidade': self.quantidade,  # Adiciona para compatibilidade
             'valor_compra': self.valor_compra,
             'valor_venda': self.valor_venda,
             'estoque_minimo': self.estoque_minimo,
