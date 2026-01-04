@@ -17,9 +17,16 @@ depends_on = None
 
 
 def upgrade():
-    # Add columns to caixa table
-    op.add_column('caixa', sa.Column('observacao_abertura', sa.String(length=200), nullable=True))
-    op.add_column('caixa', sa.Column('usuario_abertura_id', sa.Integer(), nullable=True))
+    # Add columns to caixa table (with error handling for existing columns)
+    connection = op.get_bind()
+    inspector = sa.inspect(connection)
+    columns = [col['name'] for col in inspector.get_columns('caixa')]
+
+    if 'observacao_abertura' not in columns:
+        op.add_column('caixa', sa.Column('observacao_abertura', sa.String(length=200), nullable=True))
+
+    if 'usuario_abertura_id' not in columns:
+        op.add_column('caixa', sa.Column('usuario_abertura_id', sa.Integer(), nullable=True))
 
 
 def downgrade():
