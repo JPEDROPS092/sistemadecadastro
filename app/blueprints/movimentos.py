@@ -3,6 +3,7 @@ from flask_login import login_required
 from datetime import datetime
 from app.services import MovimentoService, ProdutoService, CaixaService
 
+# 1. DEFINIÇÃO DO BLUEPRINT (Deve vir ANTES das rotas)
 movimentos_bp = Blueprint('movimentos', __name__, url_prefix='/movimentos')
 
 @movimentos_bp.route('/')
@@ -33,11 +34,16 @@ def entrada():
         try:
             produto_id = int(request.form.get('produto_id'))
             quantidade = int(request.form.get('quantidade'))
-            valor_unitario = request.form.get('valor_unitario')
             observacao = request.form.get('observacao')
-
-            if valor_unitario:
-                valor_unitario = float(valor_unitario)
+            
+            # CORREÇÃO DO FLOAT VAZIO
+            valor_raw = request.form.get('valor_unitario')
+            if valor_raw and valor_raw.strip():
+                valor_unitario = float(valor_raw.replace(',', '.'))
+            else:
+                # Busca valor de custo se não preenchido
+                produto = ProdutoService.obter_produto(produto_id)
+                valor_unitario = produto.valor_custo if produto.valor_custo else 0.0
 
             MovimentoService.registrar_entrada(produto_id, quantidade, valor_unitario, observacao)
             flash('Entrada registrada com sucesso!', 'success')
@@ -50,20 +56,22 @@ def entrada():
 
 @movimentos_bp.route('/saida', methods=['GET', 'POST'])
 @login_required
-def saida():
+def saida(): # Corrigido o nome da função para 'saida'
     if request.method == 'POST':
         try:
             produto_id = int(request.form.get('produto_id'))
             quantidade = int(request.form.get('quantidade'))
-            valor_unitario = request.form.get('valor_unitario')
             observacao = request.form.get('observacao')
             forma_pagamento = request.form.get('forma_pagamento')
-
-            if valor_unitario:
-                valor_unitario = float(valor_unitario)
+            
+            # CORREÇÃO DO FLOAT VAZIO
+            valor_raw = request.form.get('valor_unitario')
+            if valor_raw and valor_raw.strip():
+                valor_unitario = float(valor_raw.replace(',', '.'))
             else:
+                # Busca valor de venda se não preenchido
                 produto = ProdutoService.obter_produto(produto_id)
-                valor_unitario = produto.valor_venda
+                valor_unitario = produto.valor_venda if produto.valor_venda else 0.0
 
             movimento = MovimentoService.registrar_saida(produto_id, quantidade, valor_unitario, observacao)
 

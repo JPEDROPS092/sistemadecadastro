@@ -14,7 +14,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
 
 class ProductionConfig(Config):
-    DEBUG = False
+    DEBUG = False  # <--- Esta linha estava faltando ou não estava identada
 
 config = {
     'development': DevelopmentConfig,
