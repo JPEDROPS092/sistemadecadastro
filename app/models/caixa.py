@@ -9,18 +9,16 @@ class Caixa(db.Model):
     data_fechamento = db.Column(db.DateTime)
     saldo_inicial = db.Column(db.Float, default=0.0)
     saldo_final = db.Column(db.Float, default=0.0)
-    status = db.Column(db.String(20), default='aberto')  # 'aberto' ou 'fechado'
+    status = db.Column(db.String(20), default='aberto')
     observacao = db.Column(db.String(200))
     observacao_abertura = db.Column(db.String(200))
     usuario_abertura_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
 
     movimentos = db.relationship('MovimentoCaixa', backref='caixa', lazy=True, cascade='all, delete-orphan')
 
-    def __repr__(self):
-        return f'<Caixa {self.id} - {self.status}>'
-
     @property
     def total_entradas(self):
+        # Calcula a soma em tempo real. Não precisa de setter!
         return sum(m.valor for m in self.movimentos if m.tipo == 'entrada')
 
     @property
@@ -33,15 +31,12 @@ class Caixa(db.Model):
     
     @property
     def saldo_atual(self):
-        """Alias para saldo_calculado para compatibilidade com testes"""
         if self.status == 'fechado':
             return self.saldo_final
         return self.saldo_calculado
     
     @saldo_atual.setter
     def saldo_atual(self, value):
-        """Setter para saldo_atual - na prática ajusta o saldo_inicial"""
-        # Para compatibilidade com testes que definem saldo_atual na criação
         if self.status != 'fechado':
             self.saldo_inicial = value
 
@@ -55,36 +50,17 @@ class Caixa(db.Model):
             'saldo_atual': self.saldo_atual,
             'total_entradas': self.total_entradas,
             'total_saidas': self.total_saidas,
-            'saldo_calculado': self.saldo_calculado,
             'status': self.status,
-            'observacao': self.observacao,
-            'observacao_abertura': self.observacao_abertura
+            'observacao': self.observacao
         }
-
 
 class MovimentoCaixa(db.Model):
     __tablename__ = 'movimento_caixa'
-
     id = db.Column(db.Integer, primary_key=True)
     caixa_id = db.Column(db.Integer, db.ForeignKey('caixa.id'), nullable=False)
-    tipo = db.Column(db.String(10), nullable=False)  # 'entrada' ou 'saida'
-    categoria = db.Column(db.String(50), nullable=False)  # 'venda', 'compra', 'despesa', 'receita', etc
+    tipo = db.Column(db.String(10), nullable=False)
+    categoria = db.Column(db.String(50), nullable=False)
     descricao = db.Column(db.String(200), nullable=False)
     valor = db.Column(db.Float, nullable=False)
     data = db.Column(db.DateTime, default=datetime.utcnow)
-    forma_pagamento = db.Column(db.String(50))  # 'dinheiro', 'cartao', 'pix', etc
-
-    def __repr__(self):
-        return f'<MovimentoCaixa {self.tipo} - R$ {self.valor}>'
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'caixa_id': self.caixa_id,
-            'tipo': self.tipo,
-            'categoria': self.categoria,
-            'descricao': self.descricao,
-            'valor': self.valor,
-            'data': self.data.isoformat() if self.data else None,
-            'forma_pagamento': self.forma_pagamento
-        }
+    forma_pagamento = db.Column(db.String(50))

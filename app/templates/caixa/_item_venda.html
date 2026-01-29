@@ -1,0 +1,23 @@
+<tr class="item-linha">
+    <td>
+        {{ produto.nome }}
+        <input type="hidden" name="produto_ids[]" value="{{ produto.id }}">
+        <input type="hidden" name="quantidades[]" value="{{ quantidade }}">
+    </td>
+    <td style="text-align: center;">{{ quantidade }}x</td>
+    <td>R$ {{ "%.2f"|format(produto.valor_venda) }}</td>
+    <td class="valor-total-item" data-valor="{{ total_item }}">
+        R$ {{ "%.2f"|format(total_item) }}
+    </td>
+    <td style="text-align: right;">
+        <button type="button" class="bp4-button bp4-minimal bp4-icon-trash bp4-intent-danger" 
+                onclick="this.closest('tr').remove(); atualizarTotalVenda();">
+        </button>
+    </td>
+</tr>
+
+<script>
+    if (typeof atualizarTotalVenda === "function") {
+        atualizarTotalVenda();
+    }
+</script>

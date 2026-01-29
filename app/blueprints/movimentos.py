@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from datetime import datetime
+from app.models import db  # Importante para o db.session.commit()
 from app.services import MovimentoService, ProdutoService, CaixaService
 
-# 1. DEFINIÇÃO DO BLUEPRINT (Deve vir ANTES das rotas)
+# 1. DEFINIÇÃO DO BLUEPRINT
 movimentos_bp = Blueprint('movimentos', __name__, url_prefix='/movimentos')
 
 @movimentos_bp.route('/')
@@ -34,21 +35,27 @@ def entrada():
         try:
             produto_id = int(request.form.get('produto_id'))
             quantidade = int(request.form.get('quantidade'))
-            observacao = request.form.get('observacao')
+            observacao = request.form.get('observacao', 'Entrada manual')
             
-            # CORREÇÃO DO FLOAT VAZIO
+            # Tratamento do Valor Unitário
             valor_raw = request.form.get('valor_unitario')
             if valor_raw and valor_raw.strip():
                 valor_unitario = float(valor_raw.replace(',', '.'))
             else:
-                # Busca valor de custo se não preenchido
                 produto = ProdutoService.obter_produto(produto_id)
                 valor_unitario = produto.valor_custo if produto.valor_custo else 0.0
 
+            # Chama o serviço (que agora não dá commit sozinho)
             MovimentoService.registrar_entrada(produto_id, quantidade, valor_unitario, observacao)
-            flash('Entrada registrada com sucesso!', 'success')
+            
+            # Único ponto de salvamento no banco de dados
+            db.session.commit()
+            
+            flash('Entrada manual registrada com sucesso!', 'success')
             return redirect(url_for('movimentos.listar'))
+            
         except Exception as e:
+            db.session.rollback()
             flash(f'Erro ao registrar entrada: {str(e)}', 'error')
 
     produtos = ProdutoService.listar_produtos()
@@ -56,41 +63,46 @@ def entrada():
 
 @movimentos_bp.route('/saida', methods=['GET', 'POST'])
 @login_required
-def saida(): # Corrigido o nome da função para 'saida'
+def saida():
     if request.method == 'POST':
         try:
             produto_id = int(request.form.get('produto_id'))
             quantidade = int(request.form.get('quantidade'))
-            observacao = request.form.get('observacao')
+            observacao = request.form.get('observacao', 'Saída manual')
             forma_pagamento = request.form.get('forma_pagamento')
             
-            # CORREÇÃO DO FLOAT VAZIO
             valor_raw = request.form.get('valor_unitario')
             if valor_raw and valor_raw.strip():
                 valor_unitario = float(valor_raw.replace(',', '.'))
             else:
-                # Busca valor de venda se não preenchido
                 produto = ProdutoService.obter_produto(produto_id)
                 valor_unitario = produto.valor_venda if produto.valor_venda else 0.0
 
+            # Registra o histórico de movimento
             movimento = MovimentoService.registrar_saida(produto_id, quantidade, valor_unitario, observacao)
 
-            # Registrar no caixa se houver caixa aberto
+            # Lógica Financeira do Caixa
             caixa = CaixaService.obter_caixa_aberto()
             if caixa:
-                produto = ProdutoService.obter_produto(produto_id)
+                # O valor total do movimento gerado
+                valor_total = movimento.quantidade * movimento.valor_unitario
+                produto_obj = ProdutoService.obter_produto(produto_id)
+                
                 CaixaService.registrar_movimento(
-                    caixa.id,
-                    'entrada',
-                    'venda',
-                    f'Venda: {produto.nome} (x{quantidade})',
-                    movimento.valor_total,
-                    forma_pagamento
+                    caixa_id=caixa.id,
+                    tipo='entrada', # Dinheiro entrando no caixa pela venda
+                    categoria='venda',
+                    descricao=f'Saída manual: {produto_obj.nome} (x{quantidade})',
+                    valor=valor_total,
+                    forma_pagamento=forma_pagamento
                 )
 
+            db.session.commit()
             flash('Saída registrada com sucesso!', 'success')
             return redirect(url_for('movimentos.listar'))
+            
         except Exception as e:
+            db.session.rollback()
             flash(f'Erro ao registrar saída: {str(e)}', 'error')
 
     produtos = ProdutoService.listar_produtos()

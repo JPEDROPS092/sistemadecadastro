@@ -54,4 +54,23 @@
         <p class="text-center text-muted">Nenhum caixa registrado.</p>
     {% endif %}
 </div>
+<tbody>
+    {% for registro in historico %}
+    <tr>
+        <td>{{ registro.data_hora.strftime('%d/%m/%Y %H:%M') if registro.data_hora else '-' }}</td>
+        <td>{{ registro.produto.nome if registro.produto else 'Entrada Manual' }}</td>
+        <td>
+            <span class="badge {{ 'bg-success' if registro.tipo == 'ENTRADA' else 'bg-danger' }}">
+                {{ registro.tipo }}
+            </span>
+        </td>
+        <td>{{ registro.quantidade }} unid.</td>
+        <td>R$ {{ "%.2f"|format(registro.valor_total) if registro.valor_total else '0.00' }}</td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="5" class="text-center">Nenhum movimento registrado.</td>
+    </tr>
+    {% endfor %}
+</tbody>
 {% endblock %}

@@ -4,59 +4,178 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema de Gestão{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <link href="https://unpkg.com/@blueprintjs/core@^4/lib/css/blueprint.css" rel="stylesheet" />
+    <link href="https://unpkg.com/@blueprintjs/icons@^4/lib/css/blueprint-icons.css" rel="stylesheet" />
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <style>
+        :root {
+            --bg-color: #f5f8fa;
+            --dark-bg: #2f343c;
+            --primary-accent: #106ba3;
+        }
+
+        body { 
+            background-color: var(--bg-color); 
+            font-family: -apple-system, "BlinkMacSystemFont", "Segoe UI", Roboto, sans-serif;
+            margin: 0; 
+            transition: background 0.3s ease;
+        }
+        
+        body.bp4-dark { background-color: var(--dark-bg); }
+
+        .app-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* Navbar */
+        .main-navbar {
+            background: rgba(255, 255, 255, 0.8) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(16, 22, 26, 0.1);
+        }
+        .bp4-dark .main-navbar {
+            background: rgba(47, 52, 60, 0.8) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link.bp4-active {
+            color: var(--primary-accent) !important;
+            font-weight: 600;
+        }
+
+        /* Alertas */
+        .alert {
+            animation: slideIn 0.4s ease-out;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* FAB (Menu Flutuante) */
+        .fab-container { position: fixed; bottom: 30px; right: 30px; z-index: 2000; }
+        
+        .fab-button {
+            width: 60px; height: 60px; border-radius: 30px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3) !important;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .fab-button:hover { transform: scale(1.1) rotate(90deg); }
+
+        .quick-actions-menu {
+            transform-origin: bottom right;
+            animation: scaleIn 0.2s ease;
+            background: #394b59 !important;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <nav class="navbar">
-        <div class="container navbar-container">
-            <a href="{{ url_for('main.index') }}" class="navbar-brand">📊 Sistema de Gestão</a>
+<body class="bp4-dark"> 
+    
+    <nav class="bp4-navbar bp4-fixed-top main-navbar">
+        <div class="app-container">
+            <div class="bp4-navbar-group bp4-align-left">
+                <a href="{{ url_for('main.index') }}" class="bp4-button bp4-minimal bp4-large">
+                    <span class="bp4-icon bp4-icon-pulse bp4-intent-primary"></span>
+                    <span class="bp4-button-text"><strong>Gestão Inteligente</strong></span>
+                </a>
+            </div>
 
-            <button class="mobile-menu-btn" onclick="toggleMenu()">☰</button>
-
-            <ul class="navbar-menu" id="navbarMenu">
-                <li><a href="{{ url_for('main.index') }}" class="{{ 'active' if request.endpoint == 'main.index' }}">Dashboard</a></li>
-                <li><a href="{{ url_for('produtos.listar') }}" class="{{ 'active' if 'produtos' in request.endpoint }}">Produtos</a></li>
-                <li><a href="{{ url_for('movimentos.listar') }}" class="{{ 'active' if 'movimentos' in request.endpoint }}">Movimentos</a></li>
-                <li><a href="{{ url_for('caixa.index') }}" class="{{ 'active' if 'caixa' in request.endpoint }}">Caixa</a></li>
-                <li><a href="{{ url_for('relatorios.index') }}" class="{{ 'active' if 'relatorios' in request.endpoint }}">Relatórios</a></li>
-                <li><a href="{{ url_for('auth.perfil') }}" class="{{ 'active' if 'auth.perfil' in request.endpoint }}">👤 {{ current_user.username }}</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Sair</a></li>
-            </ul>
+            <div class="bp4-navbar-group bp4-align-right">
+                <div class="bp4-hidden-mobile">
+                    <a href="{{ url_for('main.index') }}" class="bp4-button bp4-minimal nav-link {{ 'bp4-active' if request.endpoint == 'main.index' }}">Dashboard</a>
+                    <a href="{{ url_for('produtos.listar') }}" class="bp4-button bp4-minimal nav-link {{ 'bp4-active' if 'produtos' in request.endpoint }}">Produtos</a>
+                    <a href="{{ url_for('movimentos.listar') }}" class="bp4-button bp4-minimal nav-link {{ 'bp4-active' if 'movimentos' in request.endpoint }}">Movimentos</a>
+                    <a href="{{ url_for('caixa.index') }}" class="bp4-button bp4-minimal nav-link {{ 'bp4-active' if 'caixa' in request.endpoint }}">Caixa</a>
+                    
+                    <span class="bp4-navbar-divider"></span>
+                    <button class="bp4-button bp4-minimal bp4-icon-user">{{ current_user.username }}</button>
+                    <a href="{{ url_for('auth.logout') }}" class="bp4-button bp4-minimal bp4-icon-log-out"></a>
+                </div>
+            </div>
         </div>
     </nav>
 
-    <main class="main-content">
-        <div class="container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+    <main style="padding-top: 80px;" hx-boost="true">
+        <div class="app-container">
+            <div id="toast-container" style="position: fixed; top: 70px; right: 20px; z-index: 2000; width: 300px;">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="bp4-callout bp4-intent-{{ 'danger' if category in ['error', 'danger'] else category }} alert" style="margin-bottom: 10px;">
+                                <button class="bp4-button bp4-minimal bp4-icon-cross" style="float: right;" onclick="this.parentElement.remove()"></button>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
 
             {% block content %}{% endblock %}
         </div>
     </main>
 
+    <div class="fab-container">
+        <div id="quick-menu" class="bp4-menu bp4-elevation-4 bp4-hidden quick-actions-menu" 
+             style="position:absolute; bottom: 75px; right: 0; min-width: 240px; border-radius: 8px;">
+            
+            <li class="bp4-menu-header"><h6 class="bp4-heading" style="color: #f5f8fa;">Atalhos de Operação</h6></li>
+            
+            <a class="bp4-menu-item bp4-icon-shopping-cart bp4-intent-success" href="{{ url_for('caixa.index') }}">
+                <div class="bp4-fill">Frente de Caixa (PDV)</div>
+                <kbd class="bp4-key" style="background: #202b33; color: #f5f8fa; border: none;">V</kbd>
+            </a>
+            
+            <a class="bp4-menu-item bp4-icon-add" href="{{ url_for('produtos.novo') }}">Cadastrar Produto</a>
+            <a class="bp4-menu-item bp4-icon-database" href="{{ url_for('produtos.listar') }}">Gerenciar Estoque</a>
+            <li class="bp4-menu-divider"></li>
+            <a class="bp4-menu-item bp4-icon-cog" href="{{ url_for('auth.perfil') }}">Configurações</a>
+        </div>
+
+        <button class="bp4-button bp4-intent-primary bp4-large bp4-icon-plus fab-button" 
+                onclick="toggleQuickMenu(event)">
+        </button>
+    </div>
+
     <script>
-        function toggleMenu() {
-            document.getElementById('navbarMenu').classList.toggle('active');
+        // Lógica do Menu de Atalhos
+        function toggleQuickMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('quick-menu');
+            menu.classList.toggle('bp4-hidden');
         }
 
-        // Fechar menu ao clicar fora
-        document.addEventListener('click', function(event) {
-            const menu = document.getElementById('navbarMenu');
-            const btn = document.querySelector('.mobile-menu-btn');
-
-            if (!menu.contains(event.target) && !btn.contains(event.target)) {
-                menu.classList.remove('active');
+        // Fechar ao clicar fora
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('quick-menu');
+            if (menu && !menu.contains(e.target)) {
+                menu.classList.add('bp4-hidden');
             }
         });
+
+        // Auto-hide alertas após 5 segundos
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(a => {
+                a.style.transition = "opacity 0.5s ease";
+                a.style.opacity = "0";
+                setTimeout(() => a.remove(), 500);
+            });
+        }, 5000);
+
+        // Feedback visual HTMX
+        document.body.addEventListener('htmx:configRequest', () => document.body.style.cursor = 'wait');
+        document.body.addEventListener('htmx:afterRequest', () => document.body.style.cursor = 'default');
     </script>
 
     {% block extra_js %}{% endblock %}

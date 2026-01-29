@@ -3,156 +3,175 @@
 {% block title %}Dashboard - Sistema de Gestão{% endblock %}
 
 {% block content %}
-<h1 class="card-title mb-3">Dashboard</h1>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div>
+        <h1 class="bp4-heading">Visão Geral</h1>
+        <p class="bp4-text-muted">Acompanhe o desempenho do seu negócio em tempo real.</p>
+    </div>
+    <div class="bp4-button-group">
+        <button class="bp4-button bp4-icon-refresh" onclick="window.location.reload()">Atualizar</button>
+        <a href="{{ url_for('relatorios.index') }}" class="bp4-button bp4-intent-primary bp4-icon-document">Relatórios</a>
+    </div>
+</div>
 
-<div class="dashboard-cards">
-    <div class="stat-card">
-        <div class="stat-card-header">
-            <div>
-                <div class="stat-card-label">Total de Produtos</div>
-                <div class="stat-card-value">{{ dashboard.total_produtos }}</div>
-            </div>
-            <div class="stat-card-icon primary">📦</div>
+<div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    
+    <div class="bp4-card bp4-interactive bp4-elevation-1" style="border-top: 4px solid #106ba3;">
+        <div style="display: flex; justify-content: space-between;">
+            <span class="bp4-icon bp4-icon-shopping-cart bp4-intent-primary" style="font-size: 24px;"></span>
+            <span class="bp4-tag bp4-minimal bp4-intent-success">Hoje</span>
+        </div>
+        <div style="margin-top: 15px;">
+            <h5 class="bp4-heading bp4-text-muted">Vendas Realizadas</h5>
+            <h2 class="bp4-heading">R$ {{ "%.2f"|format(dashboard.vendas_hoje) }}</h2>
         </div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-card-header">
-            <div>
-                <div class="stat-card-label">Vendas Hoje</div>
-                <div class="stat-card-value">R$ {{ "%.2f"|format(dashboard.vendas_hoje) }}</div>
-            </div>
-            <div class="stat-card-icon success">💰</div>
+    <div class="bp4-card bp4-interactive bp4-elevation-1" style="border-top: 4px solid #0f9960;">
+        <div style="display: flex; justify-content: space-between;">
+            <span class="bp4-icon bp4-icon-trending-up bp4-intent-success" style="font-size: 24px;"></span>
+            <span class="bp4-tag bp4-minimal bp4-intent-primary">Margem: {{ "%.1f"|format((dashboard.lucro_hoje / dashboard.vendas_hoje * 100) if dashboard.vendas_hoje > 0 else 0) }}%</span>
+        </div>
+        <div style="margin-top: 15px;">
+            <h5 class="bp4-heading bp4-text-muted">Lucro Estimado</h5>
+            <h2 class="bp4-heading" style="color: #0f9960;">R$ {{ "%.2f"|format(dashboard.lucro_hoje) }}</h2>
         </div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-card-header">
-            <div>
-                <div class="stat-card-label">Lucro Hoje</div>
-                <div class="stat-card-value {{ 'text-success' if dashboard.lucro_hoje > 0 else 'text-danger' }}">
-                    R$ {{ "%.2f"|format(dashboard.lucro_hoje) }}
+    <div class="bp4-card bp4-interactive bp4-elevation-1" style="border-top: 4px solid #d9822b;">
+        <div style="display: flex; justify-content: space-between;">
+            <span class="bp4-icon bp4-icon-database bp4-intent-warning" style="font-size: 24px;"></span>
+            {% if dashboard.produtos_estoque_baixo > 0 %}
+                <span class="bp4-tag bp4-intent-danger bp4-round">{{ dashboard.produtos_estoque_baixo }} Alertas</span>
+            {% endif %}
+        </div>
+        <div style="margin-top: 15px;">
+            <h5 class="bp4-heading bp4-text-muted">Produtos em Estoque</h5>
+            <h2 class="bp4-heading">{{ dashboard.total_produtos }} <small style="font-size: 14px;">itens</small></h2>
+        </div>
+    </div>
+
+    <div class="bp4-card bp4-interactive bp4-elevation-1" style="border-top: 4px solid #7157d1;">
+        <div style="display: flex; justify-content: space-between;">
+            <span class="bp4-icon bp4-icon-bank-account bp4-intent-primary" style="font-size: 24px;"></span>
+            <span class="bp4-tag bp4-minimal">{{ 'Aberto' if dashboard.caixa_status == 'aberto' else 'Fechado' }}</span>
+        </div>
+        <div style="margin-top: 15px;">
+            <h5 class="bp4-heading bp4-text-muted">Saldo em Caixa</h5>
+            <h2 class="bp4-heading">R$ {{ "%.2f"|format(dashboard.saldo_caixa) }}</h2>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+    
+    <div class="bp4-card bp4-elevation-1">
+        <h3 class="bp4-heading">Desempenho Semanal</h3>
+        <div style="height: 300px; margin-top: 20px;">
+            <canvas id="salesChart"></canvas>
+        </div>
+    </div>
+
+    <div class="bp4-card bp4-elevation-1">
+        <h3 class="bp4-heading">Estoque Crítico</h3>
+        <p class="bp4-text-muted">Reposição imediata necessária.</p>
+        
+        <ul class="bp4-list-unstyled" style="margin-top: 15px;">
+            {% for p in produtos if p.qtd <= p.estoque_minimo %}
+            <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #ebf1f5;">
+                <div>
+                    <div style="font-weight: 600;">{{ p.nome }}</div>
+                    <div class="bp4-text-muted" style="font-size: 12px;">Mín: {{ p.estoque_minimo }} un</div>
                 </div>
-            </div>
-            <div class="stat-card-icon {{ 'success' if dashboard.lucro_hoje > 0 else 'danger' }}">📈</div>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-card-header">
-            <div>
-                <div class="stat-card-label">Saldo em Caixa</div>
-                <div class="stat-card-value">R$ {{ "%.2f"|format(dashboard.saldo_caixa) }}</div>
-            </div>
-            <div class="stat-card-icon warning">💳</div>
-        </div>
-    </div>
-</div>
-
-{% if dashboard.produtos_estoque_baixo > 0 %}
-<div class="alert alert-warning">
-    <strong>⚠️ Atenção!</strong> Existem {{ dashboard.produtos_estoque_baixo }} produto(s) com estoque baixo.
-    <a href="{{ url_for('produtos.estoque_baixo') }}" style="margin-left: 10px;">Ver produtos</a>
-</div>
-{% endif %}
-
-<div class="grid grid-2">
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title">Status do Caixa</h2>
-            {% if dashboard.caixa_status == 'aberto' %}
-                <span class="badge badge-success">Aberto</span>
+                <span class="bp4-tag bp4-intent-danger bp4-large">{{ p.qtd }}</span>
+            </li>
             {% else %}
-                <span class="badge badge-danger">Fechado</span>
-            {% endif %}
-        </div>
-        <div>
-            <p><strong>Saldo Atual:</strong> R$ {{ "%.2f"|format(dashboard.saldo_caixa) }}</p>
-            <div class="mt-2">
-                <a href="{{ url_for('caixa.index') }}" class="btn btn-primary">Gerenciar Caixa</a>
+            <div style="text-align: center; padding-top: 40px;">
+                <span class="bp4-icon bp4-icon-tick-circle bp4-intent-success" style="font-size: 40px;"></span>
+                <p style="margin-top: 10px;">Estoque saudável!</p>
             </div>
-        </div>
+            {% endfor %}
+        </ul>
     </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title">Produtos Mais Vendidos (7 dias)</h2>
-        </div>
-        <div>
-            {% if dashboard.produtos_mais_vendidos %}
-                <ul style="list-style: none; padding: 0;">
-                    {% for p in dashboard.produtos_mais_vendidos %}
-                        <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--gray-200);">
-                            <strong>{{ p.nome }}</strong>
-                            <span class="badge badge-primary" style="float: right;">{{ p.quantidade }} un</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Nenhuma venda nos últimos 7 dias</p>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<div class="card">
-    <div class="card-header">
-        <h2 class="card-title">Produtos em Estoque</h2>
-        <a href="{{ url_for('produtos.novo') }}" class="btn btn-primary">Novo Produto</a>
-    </div>
-
-    {% if produtos %}
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Produto</th>
-                        <th>Quantidade</th>
-                        <th>Valor Compra</th>
-                        <th>Valor Venda</th>
-                        <th>Margem</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in produtos[:10] %}
-                    <tr>
-                        <td><strong>{{ p.nome }}</strong></td>
-                        <td>
-                            {{ p.qtd }}
-                            {% if p.estoque_baixo %}
-                                <span class="badge badge-warning">Baixo</span>
-                            {% endif %}
-                        </td>
-                        <td>R$ {{ "%.2f"|format(p.valor_compra) }}</td>
-                        <td>R$ {{ "%.2f"|format(p.valor_venda) }}</td>
-                        <td class="{{ 'text-success' if p.margem_lucro > 0 else 'text-danger' }}">
-                            {{ "%.1f"|format(p.margem_lucro) }}%
-                        </td>
-                        <td>
-                            {% if p.ativo %}
-                                <span class="badge badge-success">Ativo</span>
-                            {% else %}
-                                <span class="badge badge-danger">Inativo</span>
-                            {% endif %}
-                        </td>
-                        <td class="table-actions">
-                            <a href="{{ url_for('movimentos.entrada') }}?produto_id={{ p.id }}" class="btn btn-success btn-sm">Entrada</a>
-                            <a href="{{ url_for('movimentos.saida') }}?produto_id={{ p.id }}" class="btn btn-danger btn-sm">Saída</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% if produtos|length > 10 %}
-            <div class="text-center mt-2">
-                <a href="{{ url_for('produtos.listar') }}" class="btn btn-secondary">Ver Todos os Produtos</a>
-            </div>
-        {% endif %}
-    {% else %}
-        <p class="text-center text-muted">Nenhum produto cadastrado. <a href="{{ url_for('produtos.novo') }}">Cadastre o primeiro produto</a></p>
-    {% endif %}
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    // Configuração do Gráfico de Vendas
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+            datasets: [{
+                label: 'Vendas (R$)',
+                data: [120, 190, 300, 250, 400, 550, 320], // Aqui você poderá injetar dados do backend futuramente
+                borderColor: '#106ba3',
+                backgroundColor: 'rgba(16, 107, 163, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { display: false } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+</script>
+{% endblock %}
+<div class="fab-container" style="position: fixed; bottom: 30px; right: 30px; z-index: 2000;">
+    <div id="quick-menu" class="bp4-menu bp4-elevation-4 bp4-hidden quick-actions-menu" 
+         style="position:absolute; bottom: 75px; right: 0; min-width: 240px; border-radius: 8px; background: #394b59; border: 1px solid rgba(255,255,255,0.1);">
+        
+        <li class="bp4-menu-header"><h6 class="bp4-heading" style="color: #f5f8fa;">Atalhos de Operação</h6></li>
+        
+        <a class="bp4-menu-item bp4-icon-shopping-cart bp4-intent-success" href="{{ url_for('caixa.index') }}">
+            <div class="bp4-fill">Frente de Caixa (PDV)</div>
+            <kbd class="bp4-key" style="background: #202b33; color: #f5f8fa; border: none; box-shadow: none;">V</kbd>
+        </a>
+        
+        <a class="bp4-menu-item bp4-icon-add" href="{{ url_for('produtos.novo') }}">
+            <div class="bp4-fill">Cadastrar Produto</div>
+        </a>
+        
+        <a class="bp4-menu-item bp4-icon-database" href="{{ url_for('produtos.listar') }}">
+            <div class="bp4-fill">Gerenciar Estoque</div>
+        </a>
+        
+        <li class="bp4-menu-divider" style="border-color: rgba(255,255,255,0.1);"></li>
+        
+        <a class="bp4-menu-item bp4-icon-cog" href="{{ url_for('auth.perfil') }}">
+            <div class="bp4-fill">Configurações</div>
+        </a>
+    </div>
+
+    <button class="bp4-button bp4-intent-primary bp4-large bp4-round bp4-icon-plus fab-button" 
+            style="width: 60px; height: 60px; border-radius: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.3) !important;"
+            onclick="toggleQuickMenu(event)">
+    </button>
+</div>
+
+<script>
+    // Função para abrir/fechar o menu de atalhos
+    function toggleQuickMenu(event) {
+        event.stopPropagation();
+        const menu = document.getElementById('quick-menu');
+        menu.classList.toggle('bp4-hidden');
+    }
+
+    // Fecha o menu se clicar em qualquer outro lugar da tela
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('quick-menu');
+        if (menu && !menu.contains(e.target)) {
+            menu.classList.add('bp4-hidden');
+        }
+    });
+</script>

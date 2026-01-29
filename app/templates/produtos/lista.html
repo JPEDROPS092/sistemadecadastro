@@ -1,70 +1,93 @@
 {% extends 'base.html' %}
 
-{% block title %}Produtos - Sistema de Gestão{% endblock %}
+{% block title %}Inventário de Produtos - Sistema de Gestão{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h1 class="card-title">Produtos</h1>
-        <div>
-            <a href="{{ url_for('produtos.estoque_baixo') }}" class="btn btn-warning">Estoque Baixo</a>
-            <a href="{{ url_for('produtos.novo') }}" class="btn btn-primary">Novo Produto</a>
-        </div>
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
+    <div>
+        <ul class="bp4-breadcrumbs">
+            <li><a class="bp4-breadcrumb" href="{{ url_for('main.index') }}">Dashboard</a></li>
+            <li><span class="bp4-breadcrumb bp4-breadcrumb-current">Produtos</span></li>
+        </ul>
+        <h1 class="bp4-heading" style="margin-top: 10px;">Gestão de Inventário</h1>
     </div>
+    <div class="bp4-button-group">
+        <a href="{{ url_for('produtos.estoque_baixo') }}" class="bp4-button bp4-intent-warning bp4-icon-warning-sign">Estoque Baixo</a>
+        <a href="{{ url_for('produtos.novo') }}" class="bp4-button bp4-intent-primary bp4-icon-plus bp4-large">Novo Produto</a>
+    </div>
+</div>
 
+<div class="bp4-card bp4-elevation-1" style="padding: 0; overflow: hidden;">
     {% if produtos %}
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>Quantidade</th>
-                        <th>Estoque Mínimo</th>
-                        <th>Valor Compra</th>
-                        <th>Valor Venda</th>
-                        <th>Margem</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in produtos %}
-                    <tr>
-                        <td>{{ p.id }}</td>
-                        <td><strong>{{ p.nome }}</strong></td>
-                        <td>
-                            {{ p.qtd }}
-                            {% if p.estoque_baixo %}
-                                <span class="badge badge-warning">Baixo</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ p.estoque_minimo }}</td>
-                        <td>R$ {{ "%.2f"|format(p.valor_compra) }}</td>
-                        <td>R$ {{ "%.2f"|format(p.valor_venda) }}</td>
-                        <td class="{{ 'text-success' if p.margem_lucro > 0 else 'text-danger' }}">
+        <table class="bp4-html-table bp4-html-table-striped bp4-html-table-bordered bp4-interactive" style="width: 100%;">
+            <thead>
+                <tr style="background: rgba(16, 22, 26, 0.05);">
+                    <th style="width: 60px; text-align: center;">ID</th>
+                    <th>Nome do Produto</th>
+                    <th style="text-align: center;">Quantidade</th>
+                    <th style="text-align: center;">Mínimo</th>
+                    <th>Valor Compra</th>
+                    <th>Valor Venda</th>
+                    <th>Margem</th>
+                    <th>Status</th>
+                    <th style="text-align: right; padding-right: 20px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in produtos %}
+                <tr class="{{ 'row-critical' if p.qtd <= p.estoque_minimo }}">
+                    <td style="text-align: center;" class="bp4-text-muted">#{{ p.id }}</td>
+                    <td>
+                        <div style="font-weight: 600; font-size: 1.1em;">{{ p.nome }}</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <span style="font-size: 1.1em; font-weight: 500;">{{ p.qtd }}</span>
+                    </td>
+                    <td style="text-align: center;" class="bp4-text-muted">{{ p.estoque_minimo }}</td>
+                    <td>R$ {{ "%.2f"|format(p.valor_compra) }}</td>
+                    <td><strong style="color: #106ba3;">R$ {{ "%.2f"|format(p.valor_venda) }}</strong></td>
+                    <td>
+                        <span class="bp4-tag bp4-minimal {{ 'bp4-intent-success' if p.margem_lucro > 20 else 'bp4-intent-warning' }}">
                             {{ "%.1f"|format(p.margem_lucro) }}%
-                        </td>
-                        <td>
-                            {% if p.ativo %}
-                                <span class="badge badge-success">Ativo</span>
-                            {% else %}
-                                <span class="badge badge-danger">Inativo</span>
-                            {% endif %}
-                        </td>
-                        <td class="table-actions">
-                            <a href="{{ url_for('produtos.editar', id=p.id) }}" class="btn btn-primary btn-sm">Editar</a>
+                        </span>
+                    </td>
+                    <td>
+                        {% if p.qtd <= p.estoque_minimo %}
+                            <span class="bp4-tag bp4-intent-danger bp4-round">REPOR</span>
+                        {% elif p.ativo %}
+                            <span class="bp4-tag bp4-intent-success bp4-minimal bp4-round">ATIVO</span>
+                        {% else %}
+                            <span class="bp4-tag bp4-round">INATIVO</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; padding-right: 15px;">
+                        <div class="bp4-button-group bp4-minimal">
+                            <a href="{{ url_for('produtos.editar', id=p.id) }}" class="bp4-button bp4-icon-edit bp4-intent-primary" title="Editar"></a>
                             <form method="POST" action="{{ url_for('produtos.excluir', id=p.id) }}" style="display: inline;">
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Deseja realmente excluir este produto?')">Excluir</button>
+                                <button type="submit" class="bp4-button bp4-icon-trash bp4-intent-danger" 
+                                        onclick="return confirm('Deseja realmente excluir este produto?')" title="Excluir"></button>
                             </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% else %}
-        <p class="text-center text-muted">Nenhum produto cadastrado.</p>
+        <div style="padding: 60px; text-align: center;">
+            <span class="bp4-icon bp4-icon-box bp4-text-disabled" style="font-size: 48px;"></span>
+            <h4 class="bp4-heading bp4-text-disabled" style="margin-top: 15px;">Nenhum produto cadastrado</h4>
+            <a href="{{ url_for('produtos.novo') }}" class="bp4-button bp4-minimal bp4-intent-primary">Cadastrar o primeiro item</a>
+        </div>
     {% endif %}
 </div>
+
+<style>
+    /* Destaque para linhas críticas já definido na base, mas reforçado aqui */
+    .row-critical { background-color: rgba(219, 55, 55, 0.08) !important; }
+    .row-critical:hover { background-color: rgba(219, 55, 55, 0.12) !important; }
+    
+    /* Ajuste de alinhamento vertical das células */
+    .bp4-html-table td { vertical-align: middle !important; padding: 12px 8px !important; }
+</style>
 {% endblock %}

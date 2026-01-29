@@ -1,49 +1,148 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ 'Editar' if produto else 'Novo' }} Produto - Sistema de Gestão{% endblock %}
+{% block title %}{{ 'Editar' if produto else 'Novo' }} Produto{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h1 class="card-title">{{ 'Editar' if produto else 'Novo' }} Produto</h1>
-    </div>
+<div style="max-width: 1000px; margin: 0 auto;">
+    <ul class="bp4-breadcrumbs" style="margin-bottom: 20px;">
+        <li><a class="bp4-breadcrumb" href="{{ url_for('main.index') }}">Dashboard</a></li>
+        <li><a class="bp4-breadcrumb" href="{{ url_for('produtos.listar') }}">Produtos</a></li>
+        <li><span class="bp4-breadcrumb bp4-breadcrumb-current">{{ 'Editar' if produto else 'Novo' }}</span></li>
+    </ul>
 
-    <form method="POST">
-        <div class="form-group">
-            <label for="nome" class="form-label">Nome do Produto</label>
-            <input type="text" id="nome" name="nome" class="form-control" value="{{ produto.nome if produto else '' }}" required>
+    <div style="display: grid; grid-template-columns: 1fr 320px; gap: 25px; align-items: start;">
+        
+        <div class="bp4-card bp4-elevation-2">
+            <h2 class="bp4-heading" style="margin-bottom: 20px; display: flex; align-items: center;">
+                <span class="bp4-icon bp4-icon-{{ 'edit' if produto else 'add' }} bp4-intent-primary" style="margin-right: 12px; font-size: 24px;"></span>
+                {{ 'Informações do Produto' if produto else 'Novo Cadastro' }}
+            </h2>
+            
+            <form method="POST">
+                <div class="bp4-form-group">
+                    <label class="bp4-label" for="nome">Nome do Produto <span class="bp4-text-muted">(obrigatório)</span></label>
+                    <div class="bp4-input-group bp4-large">
+                        <span class="bp4-icon bp4-icon-box"></span>
+                        <input type="text" class="bp4-input" id="nome" name="nome" value="{{ produto.nome if produto else '' }}" placeholder="Ex: Arroz Tipo 1" required />
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div class="bp4-form-group">
+                        <label class="bp4-label">Preço de Compra (Custo)</label>
+                        <div class="bp4-input-group">
+                            <span class="bp4-icon bp4-icon-dollar"></span>
+                            <input type="number" step="0.01" min="0" class="bp4-input price-input" id="valor_compra" name="valor_compra" value="{{ produto.valor_compra if produto else '' }}" required />
+                        </div>
+                    </div>
+                    <div class="bp4-form-group">
+                        <label class="bp4-label">Preço de Venda (Final)</label>
+                        <div class="bp4-input-group">
+                            <span class="bp4-icon bp4-icon-trending-up"></span>
+                            <input type="number" step="0.01" min="0" class="bp4-input price-input" id="valor_venda" name="valor_venda" value="{{ produto.valor_venda if produto else '' }}" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div class="bp4-form-group">
+                        <label class="bp4-label">Estoque Mínimo</label>
+                        <div class="bp4-input-group">
+                            <span class="bp4-icon bp4-icon-notifications"></span>
+                            <input type="number" id="estoque_minimo" name="estoque_minimo" class="bp4-input" value="{{ produto.estoque_minimo if produto else 5 }}" required>
+                        </div>
+                    </div>
+                    {% if not produto %}
+                    <div class="bp4-form-group">
+                        <label class="bp4-label">Estoque Inicial</label>
+                        <div class="bp4-input-group">
+                            <span class="bp4-icon bp4-icon-layers"></span>
+                            <input type="number" name="quantidade" class="bp4-input" value="0">
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(16, 22, 26, 0.15); padding-top: 20px;">
+                    <a href="{{ url_for('produtos.listar') }}" class="bp4-button bp4-minimal">Voltar</a>
+                    <button type="submit" class="bp4-button bp4-intent-primary bp4-large bp4-icon-floppy-disk">Salvar Produto</button>
+                </div>
+            </form>
         </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="valor_compra" class="form-label">Valor de Compra (R$)</label>
-                <input type="number" id="valor_compra" name="valor_compra" class="form-control" step="0.01" min="0" value="{{ produto.valor_compra if produto else '' }}" required>
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <div class="bp4-card bp4-elevation-1" id="margin-card" style="text-align: center; padding: 20px; transition: all 0.3s ease;">
+                <span class="bp4-text-muted bp4-small" style="text-transform: uppercase; letter-spacing: 1px;">Margem Estimada</span>
+                <h1 class="bp4-heading" id="margin-display" style="margin: 10px 0; font-size: 2.5em;">0%</h1>
+                <p id="profit-value" class="bp4-text-muted">R$ 0,00 de lucro/unid</p>
             </div>
 
-            <div class="form-group">
-                <label for="valor_venda" class="form-label">Valor de Venda (R$)</label>
-                <input type="number" id="valor_venda" name="valor_venda" class="form-control" step="0.01" min="0" value="{{ produto.valor_venda if produto else '' }}" required>
+            {% if produto %}
+            <div class="bp4-callout bp4-intent-success bp4-icon-import">
+                <h4 class="bp4-heading">Reposição de Estoque</h4>
+                <p class="bp4-small">Estoque atual: <strong>{{ produto.qtd }}</strong> unid.</p>
+                
+                <form hx-post="{{ url_for('produtos.update_qtd', id=produto.id) }}" 
+                      hx-swap="none" 
+                      style="margin-top: 15px;"
+                      hx-on::after-request="if(event.detail.successful) { this.reset(); location.reload(); }">
+                    <div class="bp4-control-group bp4-fill">
+                        <input type="number" name="qtd_adicional" class="bp4-input" placeholder="Qtd" min="1" required />
+                        <button type="submit" class="bp4-button bp4-intent-success bp4-icon-add">Repor</button>
+                    </div>
+                </form>
             </div>
-        </div>
 
-        <div class="form-row">
-            {% if not produto %}
-            <div class="form-group">
-                <label for="quantidade" class="form-label">Quantidade Inicial</label>
-                <input type="number" id="quantidade" name="quantidade" class="form-control" min="0" value="0">
+            <div class="bp4-card bp4-elevation-0" style="border-left: 4px solid {{ '#db3737' if produto.qtd <= produto.estoque_minimo else '#0f9960' }}">
+                <span class="bp4-text-muted bp4-small">CONDIÇÃO ATUAL</span>
+                <div style="display: flex; align-items: center; margin-top: 5px;">
+                    <span class="bp4-icon bp4-icon-{{ 'warning-sign' if produto.qtd <= produto.estoque_minimo else 'tick-circle' }} bp4-intent-{{ 'danger' if produto.qtd <= produto.estoque_minimo else 'success' }}" style="margin-right: 8px;"></span>
+                    <strong>{{ 'Estoque Crítico' if produto.qtd <= produto.estoque_minimo else 'Estoque Saudável' }}</strong>
+                </div>
             </div>
             {% endif %}
-
-            <div class="form-group">
-                <label for="estoque_minimo" class="form-label">Estoque Mínimo</label>
-                <input type="number" id="estoque_minimo" name="estoque_minimo" class="form-control" min="0" value="{{ produto.estoque_minimo if produto else 5 }}" required>
-            </div>
         </div>
-
-        <div class="form-group">
-            <button type="submit" class="btn btn-primary">Salvar</button>
-            <a href="{{ url_for('produtos.listar') }}" class="btn btn-secondary">Cancelar</a>
-        </div>
-    </form>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const vCompra = document.getElementById('valor_compra');
+    const vVenda = document.getElementById('valor_venda');
+    const marginDisplay = document.getElementById('margin-display');
+    const profitValue = document.getElementById('profit-value');
+    const marginCard = document.getElementById('margin-card');
+
+    function calculateMargin() {
+        const compra = parseFloat(vCompra.value) || 0;
+        const venda = parseFloat(vVenda.value) || 0;
+        
+        if (compra > 0) {
+            const lucro = venda - compra;
+            const margem = (lucro / compra) * 100;
+            const lucroFormatado = lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            
+            marginDisplay.innerText = margem.toFixed(1) + '%';
+            profitValue.innerText = lucroFormatado + ' de lucro/unid';
+            
+            // Estilização dinâmica
+            if (margem <= 0) {
+                marginCard.style.background = 'rgba(219, 55, 55, 0.1)';
+                marginDisplay.style.color = '#db3737';
+            } else if (margem < 25) {
+                marginCard.style.background = 'rgba(217, 130, 43, 0.1)';
+                marginDisplay.style.color = '#d9822b';
+            } else {
+                marginCard.style.background = 'rgba(15, 153, 96, 0.1)';
+                marginDisplay.style.color = '#0f9960';
+            }
+        }
+    }
+
+    vCompra.addEventListener('input', calculateMargin);
+    vVenda.addEventListener('input', calculateMargin);
+    window.addEventListener('load', calculateMargin);
+</script>
 {% endblock %}

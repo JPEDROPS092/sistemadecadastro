@@ -1,0 +1,28 @@
+{% for p in produtos %}
+<tr class="{{ 'row-critical' if p.qtd <= 5 }}">
+    <td><strong>{{ p.nome }}</strong></td>
+    <td>
+        <input type="number" value="{{ p.qtd }}" 
+               name="qtd"
+               hx-post="{{ url_for('produtos.update_qtd', id=p.id) }}"
+               hx-trigger="change"
+               hx-swap="outerHTML"
+               class="bp4-input bp4-minimal" style="width: 70px;">
+    </td>
+    <td>R$ {{ "%.2f"|format(p.valor_venda) }}</td>
+    <td class="{{ 'text-success' if p.margem_lucro > 0 else 'text-danger' }}">
+        {{ "%.1f"|format(p.margem_lucro) }}%
+    </td>
+    <td>
+        <span class="bp4-tag bp4-minimal {{ 'bp4-intent-success' if p.ativo else 'bp4-intent-danger' }}">
+            {{ 'Ativo' if p.ativo else 'Inativo' }}
+        </span>
+    </td>
+    <td>
+        <div class="bp4-button-group">
+            <a href="{{ url_for('movimentos.entrada') }}?produto_id={{ p.id }}" class="bp4-button bp4-small bp4-icon-arrow-up bp4-intent-success"></a>
+            <a href="{{ url_for('movimentos.saida') }}?produto_id={{ p.id }}" class="bp4-button bp4-small bp4-icon-arrow-down bp4-intent-danger"></a>
+        </div>
+    </td>
+</tr>
+{% endfor %}
